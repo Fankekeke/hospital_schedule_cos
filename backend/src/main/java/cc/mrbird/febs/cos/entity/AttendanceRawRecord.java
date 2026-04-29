@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.io.Serializable;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -66,6 +67,9 @@ public class AttendanceRawRecord implements Serializable {
      * 数据是否加密: 0-否, 1-是
      */
     private Integer isEncrypted;
+
+    @TableField(exist = false)
+    private String staffName;
 
 
 }

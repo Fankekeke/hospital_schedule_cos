@@ -7,18 +7,23 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="标题"
+                label="班次名称"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.title"/>
+                <a-input v-model="queryParams.shiftName" placeholder="请输入班次名称"/>
               </a-form-item>
             </a-col>
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="内容"
+                label="班次类型"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.content"/>
+                <a-select v-model="queryParams.shiftType" placeholder="请选择班次类型" allowClear>
+                  <a-select-option :value="1">常规</a-select-option>
+                  <a-select-option :value="2">手术班</a-select-option>
+                  <a-select-option :value="3">支援班</a-select-option>
+                  <a-select-option :value="4">弹性班</a-select-option>
+                </a-select>
               </a-form-item>
             </a-col>
           </div>
@@ -131,53 +136,130 @@ export default {
     }),
     columns () {
       return [{
-        title: '标题',
-        dataIndex: 'title',
-        ellipsis: true
-      }, {
-        title: '班次内容',
-        dataIndex: 'content',
-        ellipsis: true
-      }, {
-        title: '发布时间',
-        dataIndex: 'createDate',
+        title: '班次名称',
+        dataIndex: 'shiftName',
+        ellipsis: true,
+        width: 150,
         customRender: (text, row, index) => {
-          if (text !== null) {
+          if (text) {
             return text
           } else {
             return '- -'
           }
-        },
-        ellipsis: true
+        }
       }, {
-        title: '消息类型',
-        dataIndex: 'type',
+        title: '班次类型',
+        dataIndex: 'shiftType',
+        ellipsis: true,
+        width: 100,
         customRender: (text, row, index) => {
           switch (text) {
             case 1:
-              return <a-tag>系统班次</a-tag>
+              return <a-tag color="blue">常规</a-tag>
             case 2:
-              return <a-tag>活动通知</a-tag>
+              return <a-tag color="green">手术班</a-tag>
             case 3:
-              return <a-tag>紧急消息</a-tag>
+              return <a-tag color="orange">支援班</a-tag>
+            case 4:
+              return <a-tag color="purple">弹性班</a-tag>
             default:
               return '- -'
           }
         }
       }, {
-        title: '上传人',
-        dataIndex: 'publisher',
+        title: '上班时间',
+        dataIndex: 'startTime',
+        ellipsis: true,
+        width: 100,
         customRender: (text, row, index) => {
-          if (text !== null) {
+          if (text) {
+            return text.substring(0, 5)
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '下班时间',
+        dataIndex: 'endTime',
+        ellipsis: true,
+        width: 100,
+        customRender: (text, row, index) => {
+          if (text) {
+            return text.substring(0, 5)
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '工作时长(小时)',
+        dataIndex: 'workHours',
+        ellipsis: true,
+        width: 120,
+        customRender: (text, row, index) => {
+          if (row.startTime && row.endTime) {
+            const start = row.startTime.substring(0, 5).split(':').map(Number)
+            const end = row.endTime.substring(0, 5).split(':').map(Number)
+
+            let startMinutes = start[0] * 60 + start[1]
+            let endMinutes = end[0] * 60 + end[1]
+
+            // 如果跨天，结束时间需要加24小时
+            if (row.isCrossDay === 1 || endMinutes <= startMinutes) {
+              endMinutes += 24 * 60
+            }
+
+            const diffMinutes = endMinutes - startMinutes
+            const hours = (diffMinutes / 60).toFixed(1)
+
+            return `${hours} 小时`
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '允许迟到(分钟)',
+        dataIndex: 'allowLate',
+        ellipsis: true,
+        width: 120,
+        customRender: (text, row, index) => {
+          if (text !== null && text !== undefined) {
             return text
           } else {
             return '- -'
           }
-        },
-        ellipsis: true
+        }
+      }, {
+        title: '是否跨天',
+        dataIndex: 'isCrossDay',
+        ellipsis: true,
+        width: 100,
+        customRender: (text, row, index) => {
+          switch (text) {
+            case 1:
+              return <a-tag color="red">是</a-tag>
+            case 0:
+              return <a-tag color="green">否</a-tag>
+            default:
+              return '- -'
+          }
+        }
+      }, {
+        title: '夜班津贴',
+        dataIndex: 'nightAllowance',
+        ellipsis: true,
+        width: 100,
+        customRender: (text, row, index) => {
+          if (text !== null && text !== undefined) {
+            return `¥${text}`
+          } else {
+            return '- -'
+          }
+        }
       }, {
         title: '操作',
         dataIndex: 'operation',
+        width: 100,
+        ellipsis: true,
         scopedSlots: {customRender: 'operation'}
       }]
     }
@@ -303,6 +385,9 @@ export default {
         // 如果分页信息为空，则设置为默认值
         params.size = this.pagination.defaultPageSize
         params.current = this.pagination.defaultCurrent
+      }
+      if (params.shiftType === undefined) {
+        delete params.shiftType
       }
       this.$get('/cos/attendance-shift/page', {
         ...params

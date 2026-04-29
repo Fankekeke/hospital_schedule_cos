@@ -46,21 +46,14 @@
         <a-col :span="24">
           <a-form-item label='' v-bind="formItemLayout">
             <a-row :gutter="16">
-              <a-col :span="12">
-                <a-form-item label='开始时间(分钟后)'>
+              <a-col :span="24">
+                <a-form-item label='GPS允许打卡范围(米)'>
                   <a-input-number
-                    v-decorator="['start_after']"
-                    :min="0"                    style="width: 100%"
-                    placeholder="如: 30"
+                    v-decorator="['gpsRange']"
+                    :min="0"
+                    :max="10000"                    style="width: 100%"
+                    placeholder="如: 500"
                   />
-                </a-form-item>
-              </a-col>
-              <a-col :span="12">
-                <a-form-item label='计算单位'>
-                  <a-select v-decorator="['unit']">
-                    <a-select-option value="minute">分钟</a-select-option>
-                    <a-select-option value="hour">小时</a-select-option>
-                  </a-select>
                 </a-form-item>
               </a-col>
             </a-row>

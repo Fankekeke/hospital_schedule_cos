@@ -20,5 +20,5 @@ public interface AttendanceApplicationMapper extends BaseMapper<AttendanceApplic
      * @param attendanceApplication 考勤申请信息
      * @return 结果
      */
-    IPage<LinkedHashMap<String, Object>> queryPage(Page<AttendanceApplication> page, @Param("queryFrom") AttendanceApplication attendanceApplication);
+    IPage<LinkedHashMap<String, Object>> queryPage(Page<AttendanceApplication> page, @Param("queryForm") AttendanceApplication attendanceApplication);
 }

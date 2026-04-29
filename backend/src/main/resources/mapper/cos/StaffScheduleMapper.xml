@@ -20,7 +20,7 @@
                di.dept_name,
                poi.name  as positionName
 
-        from staff_schedule ss,
+        from staff_schedule ss
              left
                  join staff_info si on (si.id = ss.staff_id)
                  left join dept_info di on (di.id = si.dept_id)

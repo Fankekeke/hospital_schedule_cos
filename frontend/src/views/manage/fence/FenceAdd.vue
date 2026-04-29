@@ -10,73 +10,65 @@
     </template>
     <a-form :form="form" layout="vertical">
       <a-row :gutter="20">
+        <a-col :span="24" style="margin-bottom: 15px">
+          <a-input-search
+            placeholder="请输入地址进行搜索"
+            enter-button="搜索"
+            @search="onSearchAddress"
+            v-model="searchAddress"            style="width: 300px; margin-bottom: 10px;"
+          />
+          <div id="areas" class="map-container">
+
+          </div>
+        </a-col>
         <a-col :span="12">
-          <a-form-item label='电子围栏标题' v-bind="formItemLayout">
+          <a-form-item label='区域名称' v-bind="formItemLayout">
             <a-input v-decorator="[
-            'title',
-            { rules: [{ required: true, message: '请输入名称!' }] }
-            ]"/>
+            'areaName',
+            { rules: [{ required: true, message: '请输入区域名称!' }] }
+            ]" placeholder="如：东院区住院部、西院急诊楼"/>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label='上传人' v-bind="formItemLayout">
+          <a-form-item label='半径(米)' v-bind="formItemLayout">
+            <a-input-number v-decorator="[
+            'radius',
+            { initialValue: 100 }
+            ]" :min="1" :max="10000" style="width: 100%"/>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label='经度' v-bind="formItemLayout">
             <a-input v-decorator="[
-            'publisher',
-            { rules: [{ required: true, message: '请输入上传人!' }] }
-            ]"/>
+            'longitude',
+            { rules: [{ required: true, message: '请在地图上选择位置!' }] }
+            ]" placeholder="点击地图选择位置" disabled/>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label='电子围栏类型' v-bind="formItemLayout">
-            <a-select v-decorator="[
-              'type',
-              { rules: [{ required: true, message: '请输入电子围栏类型!' }] }
-              ]">
-              <a-select-option value="1">系统电子围栏</a-select-option>
-              <a-select-option value="2">活动通知</a-select-option>
-              <a-select-option value="3">紧急消息</a-select-option>
-            </a-select>
+          <a-form-item label='纬度' v-bind="formItemLayout">
+            <a-input v-decorator="[
+            'latitude',
+            { rules: [{ required: true, message: '请在地图上选择位置!' }] }
+            ]" placeholder="点击地图选择位置" disabled/>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label='电子围栏状态' v-bind="formItemLayout">
+          <a-form-item label='状态' v-bind="formItemLayout">
             <a-select v-decorator="[
-              'rackUp',
-              { rules: [{ required: true, message: '请输入电子围栏状态!' }] }
-              ]">
-              <a-select-option value="0">下架</a-select-option>
-              <a-select-option value="1">已发布</a-select-option>
+            'status',
+            { initialValue: 1 }
+            ]">
+              <a-select-option :value="1">启用</a-select-option>
+              <a-select-option :value="0">禁用</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="24">
-          <a-form-item label='电子围栏内容' v-bind="formItemLayout">
-            <a-textarea :rows="6" v-decorator="[
-            'content',
-             { rules: [{ required: true, message: '请输入名称!' }] }
-            ]"/>
-          </a-form-item>
-        </a-col>
-        <a-col :span="24">
-          <a-form-item label='图册' v-bind="formItemLayout">
-            <a-upload
-              name="avatar"
-              action="http://127.0.0.1:9527/file/fileUpload/"
-              list-type="picture-card"
-              :file-list="fileList"
-              @preview="handlePreview"
-              @change="picHandleChange"
-            >
-              <div v-if="fileList.length < 8">
-                <a-icon type="plus" />
-                <div class="ant-upload-text">
-                  Upload
-                </div>
-              </div>
-            </a-upload>
-            <a-modal :visible="previewVisible" :footer="null" @cancel="handleCancel">
-              <img alt="example" style="width: 100%" :src="previewImage" />
-            </a-modal>
+          <a-form-item label='备注' v-bind="formItemLayout">
+            <a-textarea v-decorator="[
+            'remark'
+            ]" :rows="3" placeholder="请输入备注信息"/>
           </a-form-item>
         </a-col>
       </a-row>
@@ -122,12 +114,113 @@ export default {
       formItemLayout,
       form: this.$form.createForm(this),
       loading: false,
+      map: null,
       fileList: [],
       previewVisible: false,
-      previewImage: ''
+      previewImage: '',
+      searchAddress: '',
+      currentLocation: null
     }
   },
+  mounted () {
+    setTimeout(() => {
+      this.initMap()
+    }, 500)
+  },
   methods: {
+    /**
+     * 初始化地图
+     */
+    initMap () {
+      this.map = new BMapGL.Map('areas')
+      this.map.centerAndZoom(new BMapGL.Point(116.404, 39.915), 12)
+      this.map.enableScrollWheelZoom(true)
+      // this.map.setDisplayOptions({poiIcon: false})
+      this.addMapEventListeners() // 添加地图事件监听
+    },
+
+    /**
+     * 添加地图事件监听
+     */
+    addMapEventListeners () {
+      // 地图点击事件，用于选择地点
+      this.map.addEventListener('click', (e) => {
+        const point = e.latlng
+        this.setMapMarker(point)
+
+        // 反地理编码获取地址
+        const geocoder = new BMapGL.Geocoder()
+        geocoder.getLocation(point, (result) => {
+          if (result && result.address) {
+            this.searchAddress = result.address
+            this.currentLocation = {
+              address: result.address,
+              point: point
+            }
+
+            // 更新表单中的经纬度
+            this.form.setFieldsValue({
+              longitude: point.lng.toString(),
+              latitude: point.lat.toString()
+            })
+          }
+        })
+      })
+    },
+
+    /**
+     * 在地图上设置标记
+     */
+    setMapMarker(point) {
+      // 清除之前的覆盖物
+      this.map.clearOverlays()
+
+      // 设置地图中心点
+      this.map.centerAndZoom(point, 16)
+
+      // 添加标记
+      const marker = new BMapGL.Marker(point)
+      this.map.addOverlay(marker)
+
+      // 添加圆形围栏范围
+      const radius = this.form.getFieldValue('radius') || 100
+      const circle = new BMapGL.Circle(point, radius, {
+        strokeColor: '#1890ff',
+        strokeWeight: 2,
+        strokeOpacity: 0.8,
+        fillColor: '#1890ff',
+        fillOpacity: 0.2
+      })
+      this.map.addOverlay(circle)
+    },
+
+    /**
+     * 搜索地址功能
+     */
+    onSearchAddress(value) {
+      if (!value) return
+
+      const geolocation = new BMapGL.Geocoder()
+      geolocation.getPoint(value, (point) => {
+        if (point) {
+          this.setMapMarker(point)
+
+          // 更新表单中的经纬度
+          this.form.setFieldsValue({
+            longitude: point.lng.toString(),
+            latitude: point.lat.toString()
+          })
+
+          // 保存当前位置信息
+          this.currentLocation = {
+            address: value,
+            point: point
+          }
+        } else {
+          this.$message.warning('未找到该地址，请尝试其他关键词')
+        }
+      })
+    },
     handleCancel () {
       this.previewVisible = false
     },
@@ -150,18 +243,20 @@ export default {
       this.$emit('close')
     },
     handleSubmit () {
-      // 获取图片List
-      let images = []
-      this.fileList.forEach(image => {
-        images.push(image.response)
-      })
       this.form.validateFields((err, values) => {
-        values.images = images.length > 0 ? images.join(',') : null
         if (!err) {
           this.loading = true
-          this.$post('/cos/attendance-geo-fence', {
-            ...values
-          }).then((r) => {
+          // 准备提交数据
+          const submitData = {
+            areaName: values.areaName,
+            longitude: values.longitude,
+            latitude: values.latitude,
+            radius: values.radius,
+            status: values.status,
+            remark: values.remark,
+            fenceType: 1
+          }
+          this.$post('/cos/attendance-geo-fence', submitData).then((r) => {
             this.reset()
             this.$emit('success')
           }).catch(() => {
@@ -175,5 +270,12 @@ export default {
 </script>
 
 <style scoped>
+
+/* 地图容器样式 */
+#areas {
+  width: 100%;
+  height: 300px;
+  border: 1px solid #e8e8e8;
+}
 
 </style>

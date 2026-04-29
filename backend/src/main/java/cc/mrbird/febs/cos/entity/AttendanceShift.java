@@ -61,7 +61,7 @@ public class AttendanceShift implements Serializable {
     /**
      * 夜班津贴/补助标准
      */
-    private BigDecimal nightAllowance;
+    private String nightAllowance;
 
     /**
      * 删除标识

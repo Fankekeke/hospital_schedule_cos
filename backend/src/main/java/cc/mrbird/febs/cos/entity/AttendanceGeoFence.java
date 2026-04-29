@@ -49,7 +49,7 @@ public class AttendanceGeoFence implements Serializable {
     private BigDecimal latitude;
 
     /**
-     * 半径(米)
+     * 默认半径(米)
      */
     private Integer radius;
 

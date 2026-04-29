@@ -7,18 +7,10 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="标题"
+                label="区域名称"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.title"/>
-              </a-form-item>
-            </a-col>
-            <a-col :md="6" :sm="24">
-              <a-form-item
-                label="内容"
-                :labelCol="{span: 5}"
-                :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.content"/>
+                <a-input v-model="queryParams.areaName"/>
               </a-form-item>
             </a-col>
           </div>
@@ -131,53 +123,96 @@ export default {
     }),
     columns () {
       return [{
-        title: '标题',
-        dataIndex: 'title',
-        ellipsis: true
-      }, {
-        title: '电子围栏内容',
-        dataIndex: 'content',
-        ellipsis: true
-      }, {
-        title: '发布时间',
-        dataIndex: 'createDate',
+        title: '区域名称',
+        dataIndex: 'areaName',
+        ellipsis: true,
+        width: 200,
         customRender: (text, row, index) => {
-          if (text !== null) {
+          if (text) {
             return text
           } else {
             return '- -'
           }
-        },
-        ellipsis: true
+        }
       }, {
-        title: '消息类型',
-        dataIndex: 'type',
+        title: '经度',
+        dataIndex: 'longitude',
+        ellipsis: true,
+        width: 120,
+        customRender: (text, row, index) => {
+          if (text !== null && text !== undefined) {
+            return text
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '纬度',
+        dataIndex: 'latitude',
+        ellipsis: true,
+        width: 120,
+        customRender: (text, row, index) => {
+          if (text !== null && text !== undefined) {
+            return text
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '默认半径(米)',
+        dataIndex: 'radius',
+        ellipsis: true,
+        width: 100,
+        customRender: (text, row, index) => {
+          if (text !== null && text !== undefined) {
+            return text + '米'
+          } else {
+            return '- -'
+          }
+        }
+      }, {
+        title: '状态',
+        dataIndex: 'status',
+        ellipsis: true,
+        width: 80,
         customRender: (text, row, index) => {
           switch (text) {
             case 1:
-              return <a-tag>系统电子围栏</a-tag>
-            case 2:
-              return <a-tag>活动通知</a-tag>
-            case 3:
-              return <a-tag>紧急消息</a-tag>
+              return <a-tag color="green">启用</a-tag>
+            case 0:
+              return <a-tag color="red">禁用</a-tag>
             default:
               return '- -'
           }
         }
       }, {
-        title: '上传人',
-        dataIndex: 'publisher',
+        title: '备注',
+        dataIndex: 'remark',
+        ellipsis: true,
+        width: 200,
         customRender: (text, row, index) => {
-          if (text !== null) {
+          if (text) {
             return text
           } else {
             return '- -'
           }
-        },
-        ellipsis: true
+        }
+      }, {
+        title: '创建时间',
+        dataIndex: 'createTime',
+        ellipsis: true,
+        width: 160,
+        customRender: (text, row, index) => {
+          if (text) {
+            return text
+          } else {
+            return '- -'
+          }
+        }
       }, {
         title: '操作',
         dataIndex: 'operation',
+        width: 100,
         scopedSlots: {customRender: 'operation'}
       }]
     }

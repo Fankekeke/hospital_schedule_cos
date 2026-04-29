@@ -64,6 +64,14 @@ public class AttendanceShiftController {
      */
     @PostMapping
     public R save(AttendanceShift attendanceShift) {
+        if (attendanceShift.getStartTime() != null && attendanceShift.getEndTime() != null) {
+            int comparison = attendanceShift.getStartTime().compareTo(attendanceShift.getEndTime());
+            if (comparison > 0) {
+                attendanceShift.setIsCrossDay(1);
+            } else {
+                attendanceShift.setIsCrossDay(0);
+            }
+        }
         return R.ok(attendanceShiftService.save(attendanceShift));
     }
 
@@ -75,6 +83,14 @@ public class AttendanceShiftController {
      */
     @PutMapping
     public R edit(AttendanceShift attendanceShift) {
+        if (attendanceShift.getStartTime() != null && attendanceShift.getEndTime() != null) {
+            int comparison = attendanceShift.getStartTime().compareTo(attendanceShift.getEndTime());
+            if (comparison > 0) {
+                attendanceShift.setIsCrossDay(1);
+            } else {
+                attendanceShift.setIsCrossDay(0);
+            }
+        }
         return R.ok(attendanceShiftService.updateById(attendanceShift));
     }
 

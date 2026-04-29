@@ -146,38 +146,14 @@ export default {
         },
         ellipsis: true
       }, {
-        title: '开始时间(分钟)',
-        dataIndex: 'overtimeRule',
+        title: 'GPS允许打卡范围',
+        dataIndex: 'gpsRange',
         customRender: (text, row, index) => {
-          if (text) {
-            try {
-              const config = JSON.parse(text)
-              return config.start_after || 0
-            } catch (e) {
-              return '- -'
-            }
+          if (text !== null) {
+            return text + '米'
+          } else {
+            return '- -'
           }
-          return '- -'
-        },
-        ellipsis: true
-      }, {
-        title: '计算单位',
-        dataIndex: 'overtimeRule',
-        customRender: (text, row, index) => {
-          if (text) {
-            try {
-              const config = JSON.parse(text)
-              const unitMap = {
-                'minute': '分钟',
-                'hour': '小时',
-                'day': '天'
-              }
-              return unitMap[config.unit] || '- -'
-            } catch (e) {
-              return '- -'
-            }
-          }
-          return '- -'
         },
         ellipsis: true
       }, {

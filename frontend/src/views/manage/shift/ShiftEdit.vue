@@ -11,72 +11,55 @@
     <a-form :form="form" layout="vertical">
       <a-row :gutter="20">
         <a-col :span="12">
-          <a-form-item label='班次定义标题' v-bind="formItemLayout">
+          <a-form-item label='班次名称' v-bind="formItemLayout">
             <a-input v-decorator="[
-            'title',
-            { rules: [{ required: true, message: '请输入名称!' }] }
-            ]"/>
+            'shiftName',
+            { rules: [{ required: true, message: '请输入班次名称!' }] }
+            ]" placeholder="如：内科白班、手术加班班次"/>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label='上传人' v-bind="formItemLayout">
-            <a-input v-decorator="[
-            'publisher',
-            { rules: [{ required: true, message: '请输入上传人!' }] }
-            ]"/>
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label='班次定义类型' v-bind="formItemLayout">
+          <a-form-item label='班次类型' v-bind="formItemLayout">
             <a-select v-decorator="[
-              'type',
-              { rules: [{ required: true, message: '请输入班次定义类型!' }] }
-              ]">
-              <a-select-option value="1">系统班次定义</a-select-option>
-              <a-select-option value="2">活动通知</a-select-option>
-              <a-select-option value="3">紧急消息</a-select-option>
+            'shiftType',
+            { initialValue: 1, rules: [{ required: true, message: '请选择班次类型!' }] }
+            ]" placeholder="请选择班次类型">
+              <a-select-option :value="1">常规</a-select-option>
+              <a-select-option :value="2">手术班</a-select-option>
+              <a-select-option :value="3">支援班</a-select-option>
+              <a-select-option :value="4">弹性班</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="12">
-          <a-form-item label='班次定义状态' v-bind="formItemLayout">
-            <a-select v-decorator="[
-              'rackUp',
-              { rules: [{ required: true, message: '请输入班次定义状态!' }] }
-              ]">
-              <a-select-option value="0">下架</a-select-option>
-              <a-select-option value="1">已发布</a-select-option>
-            </a-select>
+          <a-form-item label='上班时间' v-bind="formItemLayout">
+            <a-time-picker v-decorator="[
+            'startTime',
+            { rules: [{ required: true, message: '请选择上班时间!' }] }
+            ]" format="HH:mm" placeholder="请选择上班时间" style="width: 100%"/>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label='下班时间' v-bind="formItemLayout">
+            <a-time-picker v-decorator="[
+            'endTime',
+            { rules: [{ required: true, message: '请选择下班时间!' }] }
+            ]" format="HH:mm" placeholder="请选择下班时间" style="width: 100%"/>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label='允许迟到(分钟)' v-bind="formItemLayout">
+            <a-input-number v-decorator="[
+            'allowLate',
+            { initialValue: 10 }
+            ]" :min="0" :max="60" placeholder="缓冲时间" style="width: 100%"/>
           </a-form-item>
         </a-col>
         <a-col :span="24">
-          <a-form-item label='班次定义内容' v-bind="formItemLayout">
+          <a-form-item label='夜班津贴' v-bind="formItemLayout">
             <a-textarea :rows="6" v-decorator="[
-            'content',
-             { rules: [{ required: true, message: '请输入名称!' }] }
+            'nightAllowance'
             ]"/>
-          </a-form-item>
-        </a-col>
-        <a-col :span="24">
-          <a-form-item label='图册' v-bind="formItemLayout">
-            <a-upload
-              name="avatar"
-              action="http://127.0.0.1:9527/file/fileUpload/"
-              list-type="picture-card"
-              :file-list="fileList"
-              @preview="handlePreview"
-              @change="picHandleChange"
-            >
-              <div v-if="fileList.length < 8">
-                <a-icon type="plus" />
-                <div class="ant-upload-text">
-                  Upload
-                </div>
-              </div>
-            </a-upload>
-            <a-modal :visible="previewVisible" :footer="null" @cancel="handleCancel">
-              <img alt="example" style="width: 100%" :src="previewImage" />
-            </a-modal>
           </a-form-item>
         </a-col>
       </a-row>
@@ -85,6 +68,8 @@
 </template>
 
 <script>
+import moment from 'moment'
+moment.locale('zh-cn')
 import {mapState} from 'vuex'
 function getBase64 (file) {
   return new Promise((resolve, reject) => {
@@ -151,21 +136,21 @@ export default {
         this.fileList = imageList
       }
     },
-    setFormValues ({...bulletin}) {
-      this.rowId = bulletin.id
-      let fields = ['title', 'content', 'publisher', 'rackUp', 'type']
+    setFormValues ({...shift}) {
+      this.rowId = shift.id
+      let fields = ['shiftName', 'shiftType', 'startTime', 'endTime', 'allowLate', 'isCrossDay', 'nightAllowance']
       let obj = {}
-      Object.keys(bulletin).forEach((key) => {
-        if (key === 'images') {
-          this.fileList = []
-          this.imagesInit(bulletin['images'])
-        }
-        if (key === 'rackUp' || key === 'type') {
-          bulletin[key] = bulletin[key].toString()
-        }
+      Object.keys(shift).forEach((key) => {
         if (fields.indexOf(key) !== -1) {
           this.form.getFieldDecorator(key)
-          obj[key] = bulletin[key]
+          let value = shift[key]
+
+          // 处理时间字段，将字符串转换为moment对象
+          if ((key === 'startTime' || key === 'endTime') && value) {
+            value = moment(value, 'HH:mm:ss')
+          }
+
+          obj[key] = value
         }
       })
       this.form.setFieldsValue(obj)
@@ -179,23 +164,18 @@ export default {
       this.$emit('close')
     },
     handleSubmit () {
-      // 获取图片List
-      let images = []
-      this.fileList.forEach(image => {
-        if (image.response !== undefined) {
-          images.push(image.response)
-        } else {
-          images.push(image.name)
-        }
-      })
       this.form.validateFields((err, values) => {
         values.id = this.rowId
-        values.images = images.length > 0 ? images.join(',') : null
         if (!err) {
           this.loading = true
-          this.$put('/cos/attendance-shift', {
-            ...values
-          }).then((r) => {
+          // 格式化时间字段
+          const submitData = {
+            id: this.rowId,
+            ...values,
+            startTime: values.startTime ? moment(values.startTime).format('HH:mm:ss') : null,
+            endTime: values.endTime ? moment(values.endTime).format('HH:mm:ss') : null
+          }
+          this.$put('/cos/attendance-shift', submitData).then((r) => {
             this.reset()
             this.$emit('success')
           }).catch(() => {
