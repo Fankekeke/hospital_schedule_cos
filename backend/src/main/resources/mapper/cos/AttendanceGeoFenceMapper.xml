@@ -2,4 +2,28 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cc.mrbird.febs.cos.dao.AttendanceGeoFenceMapper">
 
+    <select id="queryPage" resultType="java.util.LinkedHashMap">
+        SELECT
+        id,
+        area_name,
+        fence_type,
+        longitude,
+        latitude,
+        radius,
+        polygon_points,
+        beacon_uuid,
+        wifi_bssid,
+        status,
+        remark,
+        create_time,
+        update_time
+        FROM
+        attendance_geo_fence
+        WHERE
+        1 = 1
+        <if test="queryForm.areaName != null and queryForm.areaName != ''">
+            AND area_name LIKE CONCAT('%',#{queryForm.areaName},'%')
+        </if>
+        order by create_time desc
+    </select>
 </mapper>

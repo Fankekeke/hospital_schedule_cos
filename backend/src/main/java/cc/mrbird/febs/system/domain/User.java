@@ -3,6 +3,7 @@ package cc.mrbird.febs.system.domain;
 import cc.mrbird.febs.common.converter.TimeConverter;
 import cc.mrbird.febs.common.domain.RegexpConstant;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.wuwenze.poi.annotation.Excel;
@@ -50,6 +51,10 @@ public class User implements Serializable {
     @Size(min = 4, max = 10, message = "{range}")
     @ExcelField(value = "用户名")
     private String username;
+
+    private String images;
+
+    private String name;
 
     private String password;
 

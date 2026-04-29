@@ -50,7 +50,7 @@ public class PositionInfo implements Serializable {
     private String createBy;
 
     /**
-     * 所属康复师
+     * 所属医生
      */
     private Integer enterpriseId;
 

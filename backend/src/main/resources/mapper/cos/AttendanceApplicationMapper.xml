@@ -2,4 +2,34 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cc.mrbird.febs.cos.dao.AttendanceApplicationMapper">
 
+    <select id="queryPage" resultType="java.util.LinkedHashMap">
+        SELECT aa.id,
+        aa.staff_id,
+        aa.apply_type,
+        aa.start_datetime,
+        aa.end_datetime,
+        aa.reason,
+        aa.audit_status,
+        aa.auditor_id,
+        aa.create_time,
+
+        si.name as staffName,
+        si.images as staffImages,
+
+        di.dept_name,
+        poi.name as positionName
+
+        FROM attendance_application aa
+        left join staff_info si on (si.id = aa.staff_id)
+        left join dept_info di on (di.id = si.dept_id)
+        left join position_info poi on (poi.id = si.position_id)
+        WHERE 1 = 1
+        <if test="queryForm.staffName != null and queryForm.staffName != ''">
+            AND si.name LIKE CONCAT('%',#{queryForm.staffName},'%')
+        </if>
+        <if test="queryForm.applyType != null and queryForm.applyType != ''">
+            AND aa.apply_type = #{queryForm.applyType}
+        </if>
+        order by aa.create_time desc
+    </select>
 </mapper>

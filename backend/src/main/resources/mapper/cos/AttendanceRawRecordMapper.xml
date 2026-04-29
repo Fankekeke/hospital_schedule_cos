@@ -2,4 +2,35 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cc.mrbird.febs.cos.dao.AttendanceRawRecordMapper">
 
+    <select id="queryPage" resultType="java.util.LinkedHashMap">
+        SELECT
+        arr.id,
+        arr.staff_id,
+        arr.check_time,
+        arr.check_type,
+        arr.verify_mode,
+        arr.location_info,
+        arr.wifi_ssid,
+        arr.device_id,
+        arr.is_encrypted,
+
+        si.name as staffName,
+        si.images as staffImages,
+
+        di.dept_name,
+        poi.name as positionName
+
+        FROM attendance_raw_record arr
+        left join staff_info si on (si.id = arr.staff_id)
+        left join dept_info di on (di.id = si.dept_id)
+        left join position_info poi on (poi.id = si.position_id)
+        WHERE 1 = 1
+        <if test="queryForm.staffName != null and queryForm.staffName != ''">
+            AND si.name LIKE CONCAT('%',#{queryForm.staffName},'%')
+        </if>
+        <if test="queryForm.checkType != null and queryForm.checkType != ''">
+            AND arr.check_type = #{queryForm.checkType}
+        </if>
+        order by arr.check_time desc
+    </select>
 </mapper>

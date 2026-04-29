@@ -2,12 +2,8 @@ package cc.mrbird.febs.cos.controller;
 
 
 import cc.mrbird.febs.common.utils.R;
-import cc.mrbird.febs.cos.entity.ServiceReserveInfo;
 import cc.mrbird.febs.cos.entity.StaffInfo;
-import cc.mrbird.febs.cos.entity.UserInfo;
-import cc.mrbird.febs.cos.service.IServiceReserveInfoService;
 import cc.mrbird.febs.cos.service.IStaffInfoService;
-import cc.mrbird.febs.cos.service.IUserInfoService;
 import cc.mrbird.febs.system.domain.User;
 import cc.mrbird.febs.system.service.UserService;
 import cn.hutool.core.date.DateUtil;
@@ -32,33 +28,19 @@ public class StaffInfoController {
 
     private final IStaffInfoService staffInfoService;
 
-    private final IServiceReserveInfoService serviceReserveInfoService;
-
     private final UserService userService;
 
-    private final IUserInfoService userInfoService;
 
     /**
-     * 分页获取康复师信息
+     * 分页获取医生信息
      *
      * @param page          分页对象
-     * @param staffInfo 康复师信息
+     * @param staffInfo 医生信息
      * @return 结果
      */
     @GetMapping("/page")
     public R page(Page<StaffInfo> page, StaffInfo staffInfo) {
         return R.ok(staffInfoService.selectStaffPage(page, staffInfo));
-    }
-
-    /**
-     * 查询康复师列表
-     *
-     * @param userId 用户ID
-     * @return 结果
-     */
-    @GetMapping("/queryStaffListRecommend")
-    public R queryStaffListRecommend(Integer userId) {
-        return R.ok(staffInfoService.queryStaffListRecommend(userId));
     }
 
     /**
@@ -73,9 +55,9 @@ public class StaffInfoController {
     }
 
     /**
-     * 获取康复师列表
+     * 获取医生列表
      *
-     * @param enterpriseId 康复师ID
+     * @param enterpriseId 医生ID
      * @return 结果
      */
     @GetMapping("/queryStaffList")
@@ -84,9 +66,9 @@ public class StaffInfoController {
     }
 
     /**
-     * 获取康复师列表
+     * 获取医生列表
      *
-     * @param staffId 康复师ID
+     * @param staffId 医生ID
      * @return 结果
      */
     @GetMapping("/queryStaffList/staff")
@@ -96,7 +78,7 @@ public class StaffInfoController {
     }
 
     /**
-     * 获取康复师信息
+     * 获取医生信息
      *
      * @return 结果
      */
@@ -106,7 +88,7 @@ public class StaffInfoController {
     }
 
     /**
-     * 获取康复师信息
+     * 获取医生信息
      *
      * @return 结果
      */
@@ -116,31 +98,9 @@ public class StaffInfoController {
     }
 
     /**
-     * 获取康复师详细信息
+     * 新增医生信息
      *
-     * @param id ID
-     * @return 结果
-     */
-    @GetMapping("/detail/{id}")
-    public R detail(@PathVariable("id") Integer id) {
-        // 返回数据
-        LinkedHashMap<String, Object> result = new LinkedHashMap<String, Object>() {
-            {
-                put("user", null);
-                put("order", Collections.emptyList());
-            }
-        };
-        StaffInfo userInfo = staffInfoService.getOne(Wrappers.<StaffInfo>lambdaQuery().eq(StaffInfo::getUserId, id));
-        List<ServiceReserveInfo> orderList = serviceReserveInfoService.list(Wrappers.<ServiceReserveInfo>lambdaQuery().eq(ServiceReserveInfo::getWorkUserId, userInfo.getId()));
-        result.put("user", userInfo);
-        result.put("order", orderList);
-        return R.ok(result);
-    }
-
-    /**
-     * 新增康复师信息
-     *
-     * @param staffInfo 康复师信息
+     * @param staffInfo 医生信息
      * @return 结果
      */
     @PostMapping
@@ -152,20 +112,13 @@ public class StaffInfoController {
     }
 
     /**
-     * 修改康复师信息
+     * 修改医生信息
      *
-     * @param staffInfo 康复师信息
+     * @param staffInfo 医生信息
      * @return 结果
      */
     @PutMapping
     public R edit(StaffInfo staffInfo) {
-        UserInfo userInfo = userInfoService.getOne(Wrappers.<UserInfo>lambdaQuery()
-                .eq(UserInfo::getUserStaffId, staffInfo.getId()));
-        if (userInfo != null) {
-            userInfo.setName(staffInfo.getName());
-            userInfo.setImages(staffInfo.getImages());
-            userInfoService.updateById(userInfo);
-        }
         StaffInfo staffInfo1 = staffInfoService.getById(staffInfo.getId());
         if (staffInfo1.getUserId() != null) {
             userService.update(Wrappers.<User>lambdaUpdate().set(User::getName, staffInfo.getName()).set(User::getImages, staffInfo.getImages()).eq(User::getUserId, staffInfo1.getUserId()));
@@ -174,7 +127,7 @@ public class StaffInfoController {
     }
 
     /**
-     * 删除康复师信息
+     * 删除医生信息
      *
      * @param ids 主键IDS
      * @return 结果

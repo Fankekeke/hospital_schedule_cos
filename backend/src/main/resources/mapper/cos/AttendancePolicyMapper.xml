@@ -2,4 +2,55 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cc.mrbird.febs.cos.dao.AttendancePolicyMapper">
 
+    <select id="queryPage" resultType="java.util.LinkedHashMap">
+        select
+        ap.id,
+        ap.policy_name,
+        ap.target_type,
+        ap.target_id,
+        ap.gps_range,
+        ap.verify_methods,
+        ap.overtime_rule,
+        ap.update_time,
+
+        di.dept_name
+
+        from attendance_policy ap
+        left join dept_info di on (di.id = ap.target_id)
+        where 1 = 1
+        AND target_type = 1
+        <if test="queryForm.policyName != null and queryForm.policyName != ''">
+            AND ap.policy_name LIKE CONCAT('%',#{queryForm.policyName},'%')
+        </if>
+        <if test="queryForm.deptName != null and queryForm.deptName != ''">
+            AND di.dept_name LIKE CONCAT('%',#{queryForm.deptName},'%')
+        </if>
+        order by ap.id desc
+    </select>
+
+    <select id="overPage" resultType="java.util.LinkedHashMap">
+        select
+        ap.id,
+        ap.policy_name,
+        ap.target_type,
+        ap.target_id,
+        ap.gps_range,
+        ap.verify_methods,
+        ap.overtime_rule,
+        ap.update_time,
+
+        di.dept_name
+
+        from attendance_policy ap
+        left join dept_info di on (di.id = ap.target_id)
+        where 1 = 1
+        AND target_type = 2
+        <if test="queryForm.policyName != null and queryForm.policyName != ''">
+            AND ap.policy_name LIKE CONCAT('%',#{queryForm.policyName},'%')
+        </if>
+        <if test="queryForm.deptName != null and queryForm.deptName != ''">
+            AND di.dept_name LIKE CONCAT('%',#{queryForm.deptName},'%')
+        </if>
+        order by ap.id desc
+    </select>
 </mapper>

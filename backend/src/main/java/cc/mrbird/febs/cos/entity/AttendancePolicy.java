@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.io.Serializable;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,7 +34,7 @@ public class AttendancePolicy implements Serializable {
     private String policyName;
 
     /**
-     * 作用对象: 1-全院, 2-院区, 3-科室
+     * 作用对象: 1-打卡, 2-加班
      */
     private Integer targetType;
 
@@ -58,6 +59,9 @@ public class AttendancePolicy implements Serializable {
     private String overtimeRule;
 
     private String updateTime;
+
+    @TableField(exist = false)
+    private String deptName;
 
 
 }

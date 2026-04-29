@@ -16,9 +16,9 @@
             <div class="head-info-time">上次登录时间：{{user.lastLoginTime ? user.lastLoginTime : '第一次访问系统'}}</div>
           </div>
         </a-col>
-        <a-col :span="24" v-if="user.roleId == 76">
-          <work></work>
-        </a-col>
+<!--        <a-col :span="24" v-if="user.roleId == 76">-->
+<!--          <work></work>-->
+<!--        </a-col>-->
         <a-col :span="12">
           <div>
             <a-row class="more-info" v-if="user.roleId == 74">
@@ -57,7 +57,7 @@
         </a-col>
       </a-card>
     </a-row>
-    <home @setTitle="setTitleData" @setAdminTitle="setAdminTitle"></home>
+<!--    <home @setTitle="setTitleData" @setAdminTitle="setAdminTitle"></home>-->
     <a-row :gutter="8" class="count-info" style="margin-top: 15px" v-show="user.roleId == 74">
       <a-col :span="12" class="visit-count-wrapper">
         <a-card class="visit-count" hoverable>
@@ -71,13 +71,11 @@
 import HeadInfo from '@/views/common/HeadInfo'
 import {mapState} from 'vuex'
 import moment from 'moment'
-import Home from './manage/component/home/Home'
-import Work from './manage/component/user/Work.vue'
 moment.locale('zh-cn')
 
 export default {
   name: 'HomePage',
-  components: {Work, Home, HeadInfo},
+  components: { HeadInfo},
   data () {
     return {
       titleData: {

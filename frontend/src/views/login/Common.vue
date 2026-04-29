@@ -3,7 +3,7 @@
     <div class="content" style="margin: 0 auto">
       <div class="top">
         <div class="header">
-          <span class="title" style="color: white">餐厅点餐推荐系统</span>
+          <span class="title" style="color: white">医院考勤系统</span>
         </div>
         <div class="desc"></div>
       </div>

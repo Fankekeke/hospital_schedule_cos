@@ -57,5 +57,12 @@ public class StaffSchedule implements Serializable {
      */
     private Integer status;
 
+    /**
+     * 类型（1.正常 2.临派）
+     */
+    private String type;
+    private String startTime;
+    private String endTime;
+
 
 }

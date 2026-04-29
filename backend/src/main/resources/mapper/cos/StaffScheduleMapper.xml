@@ -2,4 +2,31 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="cc.mrbird.febs.cos.dao.StaffScheduleMapper">
 
+    <select id="queryPage" resultType="java.util.LinkedHashMap">
+        select ss.id,
+               ss.staff_id,
+               ss.dept_id,
+               ss.work_date,
+               ss.shift_id,
+               ss.campus_id,
+               ss.status,
+               ss.type,
+               ss.start_time,
+               ss.end_time,
+
+               si.name   as staffName,
+               si.images as staffImages,
+
+               di.dept_name,
+               poi.name  as positionName
+
+        from staff_schedule ss,
+             left
+                 join staff_info si on (si.id = ss.staff_id)
+                 left join dept_info di on (di.id = si.dept_id)
+                 left join position_info poi on (poi.id = si.position_id)
+
+        where 1 = 1
+        order by id desc
+    </select>
 </mapper>

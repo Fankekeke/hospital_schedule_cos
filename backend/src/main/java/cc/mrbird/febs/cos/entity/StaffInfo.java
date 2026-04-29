@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * 康复师管理
+ * 医生管理
  *
  * @author FanK
  */
@@ -27,7 +27,7 @@ public class StaffInfo implements Serializable {
     private Integer id;
 
     /**
-     * 康复师编号
+     * 医生编号
      */
     private String code;
 
@@ -109,7 +109,7 @@ public class StaffInfo implements Serializable {
     private Integer sysUserId;
 
     /**
-     * 所属康复师
+     * 所属医生
      */
     private Integer enterpriseId;
 

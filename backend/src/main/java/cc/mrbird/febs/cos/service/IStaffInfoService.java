@@ -14,21 +14,13 @@ import java.util.List;
 public interface IStaffInfoService extends IService<StaffInfo> {
 
     /**
-     * 分页获取康复师信息
+     * 分页获取医生信息
      *
      * @param page          分页对象
-     * @param staffInfo 康复师信息
+     * @param staffInfo 医生信息
      * @return 结果
      */
     IPage<LinkedHashMap<String, Object>> selectStaffPage(Page<StaffInfo> page, StaffInfo staffInfo);
-
-    /**
-     * 获取康复师列表
-     *
-     * @param userId 康复师ID
-     * @return 列表
-     */
-    List<LinkedHashMap<String, Object>> queryStaffListRecommend(Integer userId);
 
     /**
      * 查询用户信息详情【公告信息】
@@ -39,41 +31,26 @@ public interface IStaffInfoService extends IService<StaffInfo> {
     LinkedHashMap<String, Object> selectBulletinDetail(Integer userId);
 
     /**
-     * 查询康复师信息
+     * 查询医生信息
      *
-     * @param enterpriseId 康复师id
+     * @param enterpriseId 医生id
      * @return 结果
      */
     List<LinkedHashMap<String, Object>> selectStaffList(Integer enterpriseId);
 
     /**
-     * 获取康复师列表
+     * 获取医生列表
      *
-     * @param enterpriseId 康复师ID
+     * @param enterpriseId 医生ID
      * @return 结果
      */
     List<LinkedHashMap<String, Object>> queryStaffListByStaff(Integer enterpriseId, Integer userId);
 
     /**
-     * 根据用户id查询康复师信息
+     * 根据用户id查询医生信息
      *
      * @param userId 用户id
      * @return 结果
      */
     LinkedHashMap<String, Object> queryStaffByUserId(Integer userId);
-
-    /**
-     * 查询康复师信息
-     *
-     * @param ids ids
-     * @return 结果
-     */
-    List<LinkedHashMap<String, Object>> selectStaffListByUserIds(List<String> ids);
-
-    /**
-     * 获取首页数据
-     *
-     * @return 结果
-     */
-    LinkedHashMap<String, Object> queryHomeData();
 }
