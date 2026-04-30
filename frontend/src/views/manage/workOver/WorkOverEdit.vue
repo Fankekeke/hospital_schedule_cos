@@ -211,6 +211,7 @@ export default {
         delete values.start_after
         delete values.unit
         // 将配置对象转为JSON字符串
+        values.targetType = 2
         values.overtimeRule = JSON.stringify(overtimeRuleConfig)
         if (!err) {
           this.loading = true

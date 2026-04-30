@@ -4,23 +4,28 @@
 
     <select id="queryPage" resultType="java.util.LinkedHashMap">
         SELECT
-        id,
-        shift_name,
-        shift_type,
-        start_time,
-        end_time,
-        allow_late,
-        is_cross_day,
-        night_allowance,
-        del_flag
-        FROM attendance_shift
+        ash.id,
+        ash.shift_name,
+        ash.shift_type,
+        ash.start_time,
+        ash.end_time,
+        ash.allow_late,
+        ash.is_cross_day,
+        ash.week_day,
+        ash.night_allowance,
+        ash.del_flag,
+        ash.dept_id,
+        ash.staff_ids,
+        di.dept_name
+        FROM attendance_shift ash
+        LEFT JOIN dept_info di on (di.id = ash.dept_id)
         WHERE 1 = 1
         <if test="queryForm.shiftName != null and queryForm.shiftName != ''">
-            AND shift_name LIKE CONCAT('%',#{queryForm.shiftName},'%')
+            AND ash.shift_name LIKE CONCAT('%',#{queryForm.shiftName},'%')
         </if>
         <if test="queryForm.shiftType != null and queryForm.shiftType != ''">
-            AND shift_type = #{queryForm.shiftType}
+            AND ash.shift_type = #{queryForm.shiftType}
         </if>
-        order by id desc
+        order by ash.id desc
     </select>
 </mapper>

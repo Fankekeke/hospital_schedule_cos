@@ -15,28 +15,13 @@
             </a-col>
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="申请类型"
+                label="阅读状态"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-select v-model="queryParams.applyType" placeholder="请选择类型" style="width: 100%">
+                <a-select v-model="queryParams.readStatus" placeholder="请选择状态" style="width: 100%">
                   <a-select-option value="">全部</a-select-option>
-                  <a-select-option value="1">补卡</a-select-option>
-                  <a-select-option value="2">请假</a-select-option>
-                  <a-select-option value="3">调班</a-select-option>
-                  <a-select-option value="4">加班认定</a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :md="6" :sm="24">
-              <a-form-item
-                label="审批状态"
-                :labelCol="{span: 5}"
-                :wrapperCol="{span: 18, offset: 1}">
-                <a-select v-model="queryParams.auditStatus" placeholder="请选择状态" style="width: 100%">
-                  <a-select-option value="">全部</a-select-option>
-                  <a-select-option value="0">待审</a-select-option>
-                  <a-select-option value="1">通过</a-select-option>
-                  <a-select-option value="2">拒绝</a-select-option>
+                  <a-select-option value="0">未读</a-select-option>
+                  <a-select-option value="1">已读</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -88,22 +73,12 @@
         </template>
         <template slot="operation" slot-scope="text, record">
           <a-icon
-            v-if="record.auditStatus === 0"
-            type="check-circle"
+            type="eye"
             theme="twoTone"
-            twoToneColor="#52c41a"
-            @click="handleAudit(record)"
-            title="审 批"            style="margin-right: 8px; font-size: 18px;">
+            twoToneColor="#1890ff"
+            @click="viewDetail(record)"
+            title="查看详情"            style="font-size: 18px;">
           </a-icon>
-          <a-tooltip title="查看详情">
-            <a-icon
-              type="eye"
-              theme="twoTone"
-              twoToneColor="#1890ff"
-              @click="viewDetail(record)"
-              style="font-size: 18px;">
-            </a-icon>
-          </a-tooltip>
         </template>
       </a-table>
     </div>
@@ -119,112 +94,41 @@
       @success="handleBulletinEditSuccess"
       :bulletinEditVisiable="bulletinEdit.visiable">
     </bulletin-edit>
-    <!-- 审批弹窗 -->
-    <a-modal
-      v-model="auditModalVisible"
-      title="考勤申请审批"
-      :width="600"
-      @ok="handleAuditSubmit"
-      @cancel="handleAuditCancel"
-    >
-      <a-form :form="auditForm" layout="vertical">
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label='员工姓名'>
-              <a-input :value="currentRecord.staffName" disabled />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label='所属科室'>
-              <a-input :value="currentRecord.deptName" disabled />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label='申请类型'>
-              <a-input :value="getApplyTypeName(currentRecord.applyType)" disabled />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label='申请时间'>
-              <a-input :value="currentRecord.createTime" disabled />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item label='开始时间'>
-              <a-input :value="currentRecord.startDatetime" disabled />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label='结束时间'>
-              <a-input :value="currentRecord.endDatetime" disabled />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item label='申请原因'>
-          <a-textarea :value="currentRecord.reason" :rows="3" disabled />
-        </a-form-item>
-        <a-form-item label='审批结果' required>
-          <a-radio-group v-decorator="['auditStatus', { rules: [{ required: true, message: '请选择审批结果!' }] }]">
-            <a-radio :value="1">
-              <a-tag color="green">通过</a-tag>
-            </a-radio>
-            <a-radio :value="2">
-              <a-tag color="red">拒绝</a-tag>
-            </a-radio>
-          </a-radio-group>
-        </a-form-item>
-        <a-form-item label='审批意见'>
-          <a-textarea
-            v-decorator="['auditRemark']"
-            :rows="3"
-            placeholder="请输入审批意见（选填）"
-          />
-        </a-form-item>
-      </a-form>
-    </a-modal>
-
+    <!-- 详情弹窗 -->
     <!-- 详情弹窗 -->
     <a-modal
       v-model="detailModalVisible"
-      title="申请详情"
+      title="消息详情"
       :width="600"
       :footer="null"
     >
-      <a-descriptions bordered :column="2">
-        <a-descriptions-item label="员工姓名">
-          {{ currentRecord.staffName }}
+      <a-descriptions bordered :column="1">
+        <a-descriptions-item label="员工信息">
+          <div style="display: flex; align-items: center;">
+            <a-avatar
+              size="large"
+              :src="currentRecord.staffImages ? 'http://127.0.0.1:9527/imagesWeb/' + currentRecord.staffImages : undefined"
+              icon="user"              style="margin-right: 10px;"
+            />
+            <div>
+              <div style="font-weight: 600;">{{ currentRecord.staffName }}</div>
+              <div style="color: #999; font-size: 12px;">{{ currentRecord.deptName }} · {{ currentRecord.positionName }}</div>
+            </div>
+          </div>
         </a-descriptions-item>
-        <a-descriptions-item label="所属科室">
-          {{ currentRecord.deptName }}
+        <a-descriptions-item label="消息内容">
+          <div style="white-space: pre-wrap; line-height: 1.8;">
+            {{ currentRecord.content || '- -' }}
+          </div>
         </a-descriptions-item>
-        <a-descriptions-item label="职位">
-          {{ currentRecord.positionName }}
+        <a-descriptions-item label="发送时间">
+          {{ currentRecord.createDate || '- -' }}
         </a-descriptions-item>
-        <a-descriptions-item label="申请类型">
-          <a-tag :color="getApplyTypeColor(currentRecord.applyType)">
-            {{ getApplyTypeName(currentRecord.applyType) }}
-          </a-tag>
-        </a-descriptions-item>
-        <a-descriptions-item label="开始时间" :span="2">
-          {{ currentRecord.startDatetime }}
-        </a-descriptions-item>
-        <a-descriptions-item label="结束时间" :span="2">
-          {{ currentRecord.endDatetime }}
-        </a-descriptions-item>
-        <a-descriptions-item label="申请原因" :span="2">
-          {{ currentRecord.reason || '- -' }}
-        </a-descriptions-item>
-        <a-descriptions-item label="审批状态">
-          <a-tag :color="getAuditStatusColor(currentRecord.auditStatus)">
-            {{ getAuditStatusName(currentRecord.auditStatus) }}
-          </a-tag>
-        </a-descriptions-item>
-        <a-descriptions-item label="申请时间">
-          {{ currentRecord.createTime }}
+        <a-descriptions-item label="阅读状态">
+          <a-badge
+            :status="currentRecord.readStatus === '1' ? 'success' : 'error'"
+            :text="currentRecord.readStatus === '1' ? '已读' : '未读'"
+          />
         </a-descriptions-item>
       </a-descriptions>
     </a-modal>
@@ -233,8 +137,8 @@
 
 <script>
 import RangeDate from '@/components/datetime/RangeDate'
-import BulletinAdd from './ApplicationAdd.vue'
-import BulletinEdit from './ApplicationEdit.vue'
+import BulletinAdd from './MessageAdd.vue'
+import BulletinEdit from './MessageEdit.vue'
 import {mapState} from 'vuex'
 import moment from 'moment'
 moment.locale('zh-cn')
@@ -244,6 +148,8 @@ export default {
   components: {BulletinAdd, BulletinEdit, RangeDate},
   data () {
     return {
+      detailModalVisible: false,
+      currentRecord: {},
       advanced: false,
       bulletinAdd: {
         visiable: false
@@ -251,10 +157,6 @@ export default {
       bulletinEdit: {
         visiable: false
       },
-      auditModalVisible: false,
-      detailModalVisible: false,
-      currentRecord: {},
-      auditForm: this.$form.createForm(this),
       queryParams: {},
       filteredInfo: null,
       sortedInfo: null,
@@ -286,98 +188,71 @@ export default {
           return (
             <div style="display: flex; align-items: center;">
               <a-avatar
-                size="72"
+                size="large"
                 src={ record.staffImages ? 'http://127.0.0.1:9527/imagesWeb/' + record.staffImages : null }
                 icon={ record.staffImages ? null : 'user' }
-                style="margin-right: 15px;"
+                style="margin-right: 10px;"
               />
               <div>
-                <div>{text}</div>
-                <div style="color: #999; font-size: 12px;">{record.positionName}</div>
+                <div style="font-weight: 600;">{text}</div>
+                <div style="color: #999; font-size: 12px;">{record.deptName} · {record.positionName}</div>
               </div>
             </div>
           )
         },
-        width: 250
-      }, {
-        title: '所属科室',
-        dataIndex: 'deptName',
+        width: 200,
         ellipsis: true
       }, {
-        title: '申请类型',
-        dataIndex: 'applyType',
+        title: '消息内容',
+        dataIndex: 'content',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return (
+              <a-tooltip title={text}>
+                <div style="max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  {text}
+                </div>
+              </a-tooltip>
+            )
+          } else {
+            return '- -'
+          }
+        },
+        ellipsis: true,
+        width: 350
+      }, {
+        title: '发送时间',
+        dataIndex: 'createDate',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
+          }
+        },
+        ellipsis: true,
+        width: 160
+      }, {
+        title: '阅读状态',
+        dataIndex: 'readStatus',
         customRender: (text, row, index) => {
           switch (text) {
-            case 1:
-              return <a-tag color="blue">补卡</a-tag>
-            case 2:
-              return <a-tag color="orange">请假</a-tag>
-            case 3:
-              return <a-tag color="purple">调班</a-tag>
-            case 4:
-              return <a-tag color="cyan">加班认定</a-tag>
+            case '0':
+              return <a-badge status="error" text="未读" />
+            case '1':
+              return <a-badge status="success" text="已读" />
             default:
               return '- -'
           }
         },
-        ellipsis: true
-      }, {
-        title: '开始时间',
-        dataIndex: 'startDatetime',
-        customRender: (text, row, index) => {
-          if (text !== null) {
-            return text
-          } else {
-            return '- -'
-          }
-        },
-        ellipsis: true
-      }, {
-        title: '结束时间',
-        dataIndex: 'endDatetime',
-        customRender: (text, row, index) => {
-          if (text !== null) {
-            return text
-          } else {
-            return '- -'
-          }
-        },
-        ellipsis: true
-      }, {
-        title: '申请原因',
-        dataIndex: 'reason',
-        ellipsis: true
-      }, {
-        title: '审批状态',
-        dataIndex: 'auditStatus',
-        customRender: (text, row, index) => {
-          switch (text) {
-            case 0:
-              return <a-tag color="orange">待审</a-tag>
-            case 1:
-              return <a-tag color="green">通过</a-tag>
-            case 2:
-              return <a-tag color="red">拒绝</a-tag>
-            default:
-              return '- -'
-          }
-        },
-        ellipsis: true
-      }, {
-        title: '申请时间',
-        dataIndex: 'createTime',
-        customRender: (text, row, index) => {
-          if (text !== null) {
-            return text
-          } else {
-            return '- -'
-          }
-        },
-        ellipsis: true
+        ellipsis: true,
+        width: 100
       }, {
         title: '操作',
         dataIndex: 'operation',
-        scopedSlots: {customRender: 'operation'}
+        scopedSlots: {customRender: 'operation'},
+        width: 100,
+        fixed: 'right'
       }]
     }
   },
@@ -385,77 +260,28 @@ export default {
     this.fetch()
   },
   methods: {
-    getApplyTypeName (type) {
+    getCheckTypeName (type) {
       const typeMap = {
-        1: '补卡',
-        2: '请假',
-        3: '调班',
-        4: '加班认定'
+        1: '上班打卡',
+        2: '下班打卡'
       }
       return typeMap[type] || '- -'
     },
-    getApplyTypeColor (type) {
+    getCheckTypeColor (type) {
       const colorMap = {
-        1: 'blue',
-        2: 'orange',
-        3: 'purple',
-        4: 'cyan'
+        1: 'green',
+        2: 'blue'
       }
       return colorMap[type] || 'default'
     },
-    getAuditStatusName (status) {
-      const statusMap = {
-        0: '待审',
-        1: '通过',
-        2: '拒绝'
+    getVerifyModeName (mode) {
+      const modeMap = {
+        'FACE': '人脸识别',
+        'FINGERPRINT': '指纹',
+        'PASSWORD': '密码',
+        'GPS': 'GPS打卡'
       }
-      return statusMap[status] || '- -'
-    },
-    getAuditStatusColor (status) {
-      const colorMap = {
-        0: 'orange',
-        1: 'green',
-        2: 'red'
-      }
-      return colorMap[status] || 'default'
-    },
-    handleAudit (record) {
-      this.currentRecord = { ...record }
-      this.auditModalVisible = true
-      this.$nextTick(() => {
-        this.auditForm.resetFields()
-      })
-    },
-    handleAuditCancel () {
-      this.auditModalVisible = false
-      this.currentRecord = {}
-      this.auditForm.resetFields()
-    },
-    handleAuditSubmit () {
-      this.auditForm.validateFields((err, values) => {
-        if (!err) {
-          this.$confirm({
-            title: '确认提交审批结果？',
-            content: `审批结果：**${values.auditStatus === 1 ? '通过' : '拒绝'}**，提交后将无法修改！`,
-            centered: true,
-            onOk: () => {
-              this.$put('/cos/attendance-application/audit', {
-                id: this.currentRecord.id,
-                auditStatus: values.auditStatus,
-                approvalContent: values.auditRemark || ''
-              }).then(() => {
-                this.$message.success('审批成功')
-                this.auditModalVisible = false
-                this.currentRecord = {}
-                this.auditForm.resetFields()
-                this.fetch()
-              }).catch(() => {
-                this.$message.error('审批失败')
-              })
-            }
-          })
-        }
-      })
+      return modeMap[mode] || mode || '- -'
     },
     viewDetail (record) {
       this.currentRecord = { ...record }
@@ -475,7 +301,7 @@ export default {
     },
     handleBulletinAddSuccess () {
       this.bulletinAdd.visiable = false
-      this.$message.success('新增考勤审批成功')
+      this.$message.success('新增打卡记录成功')
       this.search()
     },
     edit (record) {
@@ -487,7 +313,7 @@ export default {
     },
     handleBulletinEditSuccess () {
       this.bulletinEdit.visiable = false
-      this.$message.success('修改考勤审批成功')
+      this.$message.success('修改打卡记录成功')
       this.search()
     },
     handleDeptChange (value) {
@@ -509,7 +335,7 @@ export default {
         centered: true,
         onOk () {
           let ids = that.selectedRowKeys.join(',')
-          that.$delete('/cos/attendance-application/' + ids).then(() => {
+          that.$delete('/cos/message-info/' + ids).then(() => {
             that.$message.success('删除成功')
             that.selectedRowKeys = []
             that.search()
@@ -579,7 +405,7 @@ export default {
         params.size = this.pagination.defaultPageSize
         params.current = this.pagination.defaultCurrent
       }
-      this.$get('/cos/attendance-application/page', {
+      this.$get('/cos/message-info/page', {
         ...params
       }).then((r) => {
         let data = r.data.data

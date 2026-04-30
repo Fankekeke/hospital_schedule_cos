@@ -7,18 +7,22 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="标题"
+                label="员工姓名"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.title"/>
+                <a-input v-model="queryParams.staffName"/>
               </a-form-item>
             </a-col>
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="内容"
+                label="打卡类型"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.content"/>
+                <a-select v-model="queryParams.checkType" placeholder="请选择类型" style="width: 100%">
+                  <a-select-option value="">全部</a-select-option>
+                  <a-select-option value="1">上班打卡</a-select-option>
+                  <a-select-option value="2">下班打卡</a-select-option>
+                </a-select>
               </a-form-item>
             </a-col>
           </div>
@@ -31,7 +35,7 @@
     </div>
     <div>
       <div class="operator">
-        <a-button type="primary" ghost @click="add">新增</a-button>
+<!--        <a-button type="primary" ghost @click="add">新增</a-button>-->
         <a-button @click="batchDelete">删除</a-button>
 <!--        <a-button @click="batchDelete1">删除</a-button>-->
       </div>
@@ -68,7 +72,13 @@
           </template>
         </template>
         <template slot="operation" slot-scope="text, record">
-          <a-icon type="setting" theme="twoTone" twoToneColor="#4a9ff5" @click="edit(record)" title="修 改"></a-icon>
+          <a-icon
+            type="eye"
+            theme="twoTone"
+            twoToneColor="#1890ff"
+            @click="viewDetail(record)"
+            title="查看详情"            style="font-size: 18px;">
+          </a-icon>
         </template>
       </a-table>
     </div>
@@ -84,6 +94,55 @@
       @success="handleBulletinEditSuccess"
       :bulletinEditVisiable="bulletinEdit.visiable">
     </bulletin-edit>
+    <!-- 详情弹窗 -->
+    <a-modal
+      v-model="detailModalVisible"
+      title="打卡记录详情"
+      :width="700"
+      :footer="null"
+    >
+      <a-descriptions bordered :column="2">
+        <a-descriptions-item label="员工姓名">
+          {{ currentRecord.staffName }}
+        </a-descriptions-item>
+        <a-descriptions-item label="所属科室">
+          {{ currentRecord.deptName }}
+        </a-descriptions-item>
+        <a-descriptions-item label="职位">
+          {{ currentRecord.positionName }}
+        </a-descriptions-item>
+        <a-descriptions-item label="打卡时间" :span="2">
+          {{ currentRecord.checkTime }}
+        </a-descriptions-item>
+        <a-descriptions-item label="打卡类型">
+          <a-tag :color="getCheckTypeColor(currentRecord.checkType)">
+            {{ getCheckTypeName(currentRecord.checkType) }}
+          </a-tag>
+        </a-descriptions-item>
+        <a-descriptions-item label="验证方式">
+          <a-tag color="purple">
+            {{ getVerifyModeName(currentRecord.verifyMode) }}
+          </a-tag>
+        </a-descriptions-item>
+        <a-descriptions-item label="位置信息" :span="2">
+          {{ currentRecord.locationInfo || '- -' }}
+        </a-descriptions-item>
+        <a-descriptions-item label="是否加密">
+          <a-tag :color="currentRecord.isEncrypted === 1 ? 'green' : 'red'">
+            {{ currentRecord.isEncrypted === 1 ? '已加密' : '未加密' }}
+          </a-tag>
+        </a-descriptions-item>
+        <a-descriptions-item label="员工头像">
+          <a-avatar
+            v-if="currentRecord.staffImages"
+            shape="square"
+            size="large"
+            :src="'http://127.0.0.1:9527/imagesWeb/' + currentRecord.staffImages"
+          />
+          <a-avatar v-else shape="square" size="large" icon="user" />
+        </a-descriptions-item>
+      </a-descriptions>
+    </a-modal>
   </a-card>
 </template>
 
@@ -100,6 +159,8 @@ export default {
   components: {BulletinAdd, BulletinEdit, RangeDate},
   data () {
     return {
+      detailModalVisible: false,
+      currentRecord: {},
       advanced: false,
       bulletinAdd: {
         visiable: false
@@ -131,16 +192,33 @@ export default {
     }),
     columns () {
       return [{
-        title: '标题',
-        dataIndex: 'title',
+        title: '员工姓名',
+        dataIndex: 'staffName',
+        customRender: (text, record, index) => {
+          if (!text) return '- -'
+          return (
+            <div style="display: flex; align-items: center;">
+              <a-avatar
+                size="72"
+                src={ record.staffImages ? 'http://127.0.0.1:9527/imagesWeb/' + record.staffImages : null }
+                icon={ record.staffImages ? null : 'user' }
+                style="margin-right: 15px;"
+              />
+              <div>
+                <div>{text}</div>
+                <div style="color: #999; font-size: 12px;">{record.positionName}</div>
+              </div>
+            </div>
+          )
+        },
+        width: 250
+      }, {
+        title: '所属科室',
+        dataIndex: 'deptName',
         ellipsis: true
       }, {
-        title: '打卡记录内容',
-        dataIndex: 'content',
-        ellipsis: true
-      }, {
-        title: '发布时间',
-        dataIndex: 'createDate',
+        title: '打卡时间',
+        dataIndex: 'checkTime',
         customRender: (text, row, index) => {
           if (text !== null) {
             return text
@@ -150,23 +228,39 @@ export default {
         },
         ellipsis: true
       }, {
-        title: '消息类型',
-        dataIndex: 'type',
+        title: '打卡类型',
+        dataIndex: 'checkType',
         customRender: (text, row, index) => {
           switch (text) {
             case 1:
-              return <a-tag>系统打卡记录</a-tag>
+              return <a-tag color="green">上班打卡</a-tag>
             case 2:
-              return <a-tag>活动通知</a-tag>
-            case 3:
-              return <a-tag>紧急消息</a-tag>
+              return <a-tag color="blue">下班打卡</a-tag>
             default:
               return '- -'
           }
-        }
+        },
+        ellipsis: true
       }, {
-        title: '上传人',
-        dataIndex: 'publisher',
+        title: '验证方式',
+        dataIndex: 'verifyMode',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            const modeMap = {
+              'FACE': '人脸识别',
+              'FINGERPRINT': '指纹',
+              'PASSWORD': '密码',
+              'GPS': 'GPS打卡'
+            }
+            return modeMap[text] || text
+          } else {
+            return '- -'
+          }
+        },
+        ellipsis: true
+      }, {
+        title: '位置信息',
+        dataIndex: 'locationInfo',
         customRender: (text, row, index) => {
           if (text !== null) {
             return text
@@ -186,6 +280,33 @@ export default {
     this.fetch()
   },
   methods: {
+    getCheckTypeName (type) {
+      const typeMap = {
+        1: '上班打卡',
+        2: '下班打卡'
+      }
+      return typeMap[type] || '- -'
+    },
+    getCheckTypeColor (type) {
+      const colorMap = {
+        1: 'green',
+        2: 'blue'
+      }
+      return colorMap[type] || 'default'
+    },
+    getVerifyModeName (mode) {
+      const modeMap = {
+        'FACE': '人脸识别',
+        'FINGERPRINT': '指纹',
+        'PASSWORD': '密码',
+        'GPS': 'GPS打卡'
+      }
+      return modeMap[mode] || mode || '- -'
+    },
+    viewDetail (record) {
+      this.currentRecord = { ...record }
+      this.detailModalVisible = true
+    },
     onSelectChange (selectedRowKeys) {
       this.selectedRowKeys = selectedRowKeys
     },

@@ -17,7 +17,7 @@
             @search="onSearchAddress"
             v-model="searchAddress"            style="width: 300px; margin-bottom: 10px;"
           />
-          <div id="areas" class="map-container">
+          <div id="areas1" class="map-container">
 
           </div>
         </a-col>
@@ -132,7 +132,7 @@ export default {
      * 初始化地图
      */
     initMap () {
-      this.map = new BMapGL.Map('areas')
+      this.map = new BMapGL.Map('areas1')
       this.map.centerAndZoom(new BMapGL.Point(116.404, 39.915), 12)
       this.map.enableScrollWheelZoom(true)
       // this.map.setDisplayOptions({poiIcon: false})
@@ -272,7 +272,7 @@ export default {
 <style scoped>
 
 /* 地图容器样式 */
-#areas {
+#areas1 {
   width: 100%;
   height: 300px;
   border: 1px solid #e8e8e8;

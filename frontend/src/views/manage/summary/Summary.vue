@@ -7,18 +7,46 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="标题"
+                label="员工姓名"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.title"/>
+                <a-input v-model="queryParams.staffName"/>
               </a-form-item>
             </a-col>
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="内容"
+                label="科室名称"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.content"/>
+                <a-input v-model="queryParams.deptName"/>
+              </a-form-item>
+            </a-col>
+<!--            <a-col :md="6" :sm="24">-->
+<!--              <a-form-item-->
+<!--                label="工作日期"-->
+<!--                :labelCol="{span: 5}"-->
+<!--                :wrapperCol="{span: 18, offset: 1}">-->
+<!--                <a-date-picker-->
+<!--                  v-model="queryParams.workDate"-->
+<!--                  format="YYYY-MM-DD"-->
+<!--                  placeholder="请选择工作日期"-->
+<!--                  style="width: 100%"-->
+<!--                />-->
+<!--              </a-form-item>-->
+<!--            </a-col>-->
+            <a-col :md="6" :sm="24">
+              <a-form-item
+                label="考勤状态"
+                :labelCol="{span: 5}"
+                :wrapperCol="{span: 18, offset: 1}">
+                <a-select v-model="queryParams.resultStatus" placeholder="请选择状态" style="width: 100%">
+                  <a-select-option value="">全部</a-select-option>
+                  <a-select-option value="1">正常</a-select-option>
+                  <a-select-option value="2">迟到</a-select-option>
+                  <a-select-option value="3">早退</a-select-option>
+                  <a-select-option value="4">缺卡</a-select-option>
+                  <a-select-option value="5">旷工</a-select-option>
+                </a-select>
               </a-form-item>
             </a-col>
           </div>
@@ -31,8 +59,9 @@
     </div>
     <div>
       <div class="operator">
-        <a-button type="primary" ghost @click="add">新增</a-button>
-        <a-button @click="batchDelete">删除</a-button>
+        <a-button type="primary" ghost @click="generateAttendanceSummary">统计昨日考勤</a-button>
+        <a-button type="primary" ghost @click="generateAttendanceSummaryFix">统计本月考勤</a-button>
+<!--        <a-button @click="batchDelete">删除</a-button>-->
 <!--        <a-button @click="batchDelete1">删除</a-button>-->
       </div>
       <!-- 表格区域 -->
@@ -131,16 +160,34 @@ export default {
     }),
     columns () {
       return [{
-        title: '标题',
-        dataIndex: 'title',
-        ellipsis: true
+        title: '员工姓名',
+        dataIndex: 'staffName',
+        customRender: (text, record, index) => {
+          if (!text) return '- -'
+          return (
+            <div style="display: flex; align-items: center;">
+              <a-avatar
+                size="72"
+                src={ record.staffImages ? 'http://127.0.0.1:9527/imagesWeb/' + record.staffImages : null }
+                icon={ record.staffImages ? null : 'user' }
+                style="margin-right: 15px;"
+              />
+              <div>
+                <div>{text}</div>
+                <div style="color: #999; font-size: 12px;">{record.positionName}</div>
+              </div>
+            </div>
+          )
+        },
+        width: 250
       }, {
-        title: '考勤汇总内容',
-        dataIndex: 'content',
-        ellipsis: true
+        title: '所属科室',
+        dataIndex: 'deptName',
+        ellipsis: true,
+        width: 120
       }, {
-        title: '发布时间',
-        dataIndex: 'createDate',
+        title: '工作日期',
+        dataIndex: 'workDate',
         customRender: (text, row, index) => {
           if (text !== null) {
             return text
@@ -148,37 +195,101 @@ export default {
             return '- -'
           }
         },
-        ellipsis: true
+        ellipsis: true,
+        width: 120
       }, {
-        title: '消息类型',
-        dataIndex: 'type',
+        title: '规定上班时间',
+        dataIndex: 'startTime',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
+          }
+        },
+        ellipsis: true,
+        width: 160
+      }, {
+        title: '规定下班时间',
+        dataIndex: 'endTime',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
+          }
+        },
+        ellipsis: true,
+        width: 160
+      }, {
+        title: '考勤状态',
+        dataIndex: 'resultStatus',
         customRender: (text, row, index) => {
           switch (text) {
             case 1:
-              return <a-tag>系统考勤汇总</a-tag>
+              return <a-tag color="green">正常</a-tag>
             case 2:
-              return <a-tag>活动通知</a-tag>
+              return <a-tag color="orange">迟到</a-tag>
             case 3:
-              return <a-tag>紧急消息</a-tag>
+              return <a-tag color="cyan">早退</a-tag>
+            case 4:
+              return <a-tag color="red">缺卡</a-tag>
+            case 5:
+              return <a-tag color="purple">旷工</a-tag>
             default:
               return '- -'
           }
-        }
+        },
+        ellipsis: true,
+        width: 100
       }, {
-        title: '上传人',
-        dataIndex: 'publisher',
+        title: '迟到(分钟)',
+        dataIndex: 'lateMinutes',
         customRender: (text, row, index) => {
-          if (text !== null) {
-            return text
+          if (text !== null && text > 0) {
+            return <span style="color: #ff4d4f">{text}</span>
           } else {
             return '- -'
           }
         },
-        ellipsis: true
+        ellipsis: true,
+        width: 100
       }, {
-        title: '操作',
-        dataIndex: 'operation',
-        scopedSlots: {customRender: 'operation'}
+        title: '早退(分钟)',
+        dataIndex: 'earlyMinutes',
+        customRender: (text, row, index) => {
+          if (text !== null && text > 0) {
+            return <span style="color: #ff4d4f">{text}</span>
+          } else {
+            return '- -'
+          }
+        },
+        ellipsis: true,
+        width: 100
+      }, {
+        title: '加班(分钟)',
+        dataIndex: 'otMinutes',
+        customRender: (text, row, index) => {
+          if (text !== null && text > 0) {
+            return <span style="color: #52c41a">{text}</span>
+          } else {
+            return '- -'
+          }
+        },
+        ellipsis: true,
+        width: 100
+      }, {
+        title: '是否异常',
+        dataIndex: 'isException',
+        customRender: (text, row, index) => {
+          if (text === 1) {
+            return <a-tag color="red">是</a-tag>
+          } else {
+            return <a-tag color="green">否</a-tag>
+          }
+        },
+        ellipsis: true,
+        width: 100
       }]
     }
   },
@@ -186,6 +297,18 @@ export default {
     this.fetch()
   },
   methods: {
+    generateAttendanceSummary () {
+      this.$get('/cos/attendance-summary/generateAttendanceSummary').then((r) => {
+        this.$message.success('生成考勤汇总成功')
+        this.fetch()
+      })
+    },
+    generateAttendanceSummaryFix () {
+      this.$get('/cos/attendance-summary/generateAttendanceSummaryFix').then((r) => {
+        this.$message.success('生成考勤汇总成功')
+        this.fetch()
+      })
+    },
     onSelectChange (selectedRowKeys) {
       this.selectedRowKeys = selectedRowKeys
     },

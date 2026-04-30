@@ -63,10 +63,14 @@ public class AttendanceShift implements Serializable {
      */
     private String nightAllowance;
 
+    private String weekDay;
+
     /**
      * 删除标识
      */
     private String delFlag;
+    private String deptId;
+    private String staffIds;
 
 
 }

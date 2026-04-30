@@ -7,18 +7,23 @@
           <div :class="advanced ? null: 'fold'">
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="标题"
+                label="员工姓名"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.title"/>
+                <a-input v-model="queryParams.staffName"/>
               </a-form-item>
             </a-col>
             <a-col :md="6" :sm="24">
               <a-form-item
-                label="内容"
+                label="排班状态"
                 :labelCol="{span: 5}"
                 :wrapperCol="{span: 18, offset: 1}">
-                <a-input v-model="queryParams.content"/>
+                <a-select v-model="queryParams.status" placeholder="请选择状态" style="width: 100%">
+                  <a-select-option value="">全部</a-select-option>
+                  <a-select-option value="0">正常</a-select-option>
+                  <a-select-option value="1">调班中</a-select-option>
+                  <a-select-option value="2">已请假</a-select-option>
+                </a-select>
               </a-form-item>
             </a-col>
           </div>
@@ -131,16 +136,37 @@ export default {
     }),
     columns () {
       return [{
-        title: '标题',
-        dataIndex: 'title',
+        title: '员工姓名',
+        dataIndex: 'staffName',
+        customRender: (text, record, index) => {
+          if (!text) return '- -'
+          return (
+            <div style="display: flex; align-items: center;">
+              <a-avatar
+                size="72"
+                src={ record.staffImages ? 'http://127.0.0.1:9527/imagesWeb/' + record.staffImages : null }
+                icon={ record.staffImages ? null : 'user' }
+                style="margin-right: 15px;"
+              />
+              <div>
+                <div>{text}</div>
+                <div style="color: #999; font-size: 12px;">{record.positionName}</div>
+              </div>
+            </div>
+          )
+        },
+        width: 250
+      }, {
+        title: '所属科室',
+        dataIndex: 'deptName',
         ellipsis: true
       }, {
-        title: '排班计划内容',
-        dataIndex: 'content',
+        title: '职位',
+        dataIndex: 'positionName',
         ellipsis: true
       }, {
-        title: '发布时间',
-        dataIndex: 'createDate',
+        title: '排班日期',
+        dataIndex: 'workDate',
         customRender: (text, row, index) => {
           if (text !== null) {
             return text
@@ -150,28 +176,75 @@ export default {
         },
         ellipsis: true
       }, {
-        title: '消息类型',
+        title: '类型',
         dataIndex: 'type',
         customRender: (text, row, index) => {
           switch (text) {
-            case 1:
-              return <a-tag>系统排班计划</a-tag>
-            case 2:
-              return <a-tag>活动通知</a-tag>
-            case 3:
-              return <a-tag>紧急消息</a-tag>
+            case '1':
+              return <a-tag color="green">正常</a-tag>
+            case '2':
+              return <a-tag color="orange">临派</a-tag>
             default:
               return '- -'
           }
-        }
+        },
+        ellipsis: true
       }, {
-        title: '上传人',
-        dataIndex: 'publisher',
+        title: '开始时间',
+        dataIndex: 'startTime',
         customRender: (text, row, index) => {
           if (text !== null) {
             return text
           } else {
             return '- -'
+          }
+        },
+        ellipsis: true
+      }, {
+        title: '结束时间',
+        dataIndex: 'endTime',
+        customRender: (text, row, index) => {
+          if (text !== null) {
+            return text
+          } else {
+            return '- -'
+          }
+        },
+        ellipsis: true
+      }, {
+        title: '加班时长',
+        dataIndex: 'overtimeDuration',
+        customRender: (text, row, index) => {
+          if (row.startTime && row.endTime) {
+            const start = moment(row.startTime, 'HH:mm:ss')
+            const end = moment(row.endTime, 'HH:mm:ss')
+            const duration = end.diff(start, 'hours', true)
+            if (duration > 0) {
+              const hours = Math.floor(duration)
+              const minutes = Math.round((duration - hours) * 60)
+              if (minutes > 0) {
+                return `${hours}小时${minutes}分钟`
+              }
+              return `${hours}小时`
+            }
+            return '- -'
+          }
+          return '- -'
+        },
+        ellipsis: true
+      }, {
+        title: '状态',
+        dataIndex: 'status',
+        customRender: (text, row, index) => {
+          switch (text) {
+            case 0:
+              return <a-tag color="green">正常</a-tag>
+            case 1:
+              return <a-tag color="orange">调班中</a-tag>
+            case 2:
+              return <a-tag color="red">已请假</a-tag>
+            default:
+              return '- -'
           }
         },
         ellipsis: true

@@ -1,5 +1,5 @@
 <template>
-  <a-modal v-model="show" title="新增排班计划" @cancel="onClose" :width="800">
+  <a-modal v-model="show" title="新增临派排班" @cancel="onClose" :width="600">
     <template slot="footer">
       <a-button key="back" @click="onClose">
         取消
@@ -10,73 +10,87 @@
     </template>
     <a-form :form="form" layout="vertical">
       <a-row :gutter="20">
-        <a-col :span="12">
-          <a-form-item label='排班计划标题' v-bind="formItemLayout">
-            <a-input v-decorator="[
-            'title',
-            { rules: [{ required: true, message: '请输入名称!' }] }
-            ]"/>
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label='上传人' v-bind="formItemLayout">
-            <a-input v-decorator="[
-            'publisher',
-            { rules: [{ required: true, message: '请输入上传人!' }] }
-            ]"/>
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label='排班计划类型' v-bind="formItemLayout">
-            <a-select v-decorator="[
-              'type',
-              { rules: [{ required: true, message: '请输入排班计划类型!' }] }
-              ]">
-              <a-select-option value="1">系统排班计划</a-select-option>
-              <a-select-option value="2">活动通知</a-select-option>
-              <a-select-option value="3">紧急消息</a-select-option>
-            </a-select>
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label='排班计划状态' v-bind="formItemLayout">
-            <a-select v-decorator="[
-              'rackUp',
-              { rules: [{ required: true, message: '请输入排班计划状态!' }] }
-              ]">
-              <a-select-option value="0">下架</a-select-option>
-              <a-select-option value="1">已发布</a-select-option>
-            </a-select>
-          </a-form-item>
-        </a-col>
-        <a-col :span="24">
-          <a-form-item label='排班计划内容' v-bind="formItemLayout">
-            <a-textarea :rows="6" v-decorator="[
-            'content',
-             { rules: [{ required: true, message: '请输入名称!' }] }
-            ]"/>
-          </a-form-item>
-        </a-col>
-        <a-col :span="24">
-          <a-form-item label='图册' v-bind="formItemLayout">
-            <a-upload
-              name="avatar"
-              action="http://127.0.0.1:9527/file/fileUpload/"
-              list-type="picture-card"
-              :file-list="fileList"
-              @preview="handlePreview"
-              @change="picHandleChange"
+        <a-col :span="16">
+          <a-form-item label='员工' v-bind="formItemLayout">
+            <a-select
+              v-decorator="[
+                'staffId',
+                { rules: [{ required: true, message: '请选择员工!' }] }
+              ]"
+              placeholder="请选择员工"              style="width: 100%"
+              @change="handleStaffChange"
             >
-              <div v-if="fileList.length < 8">
-                <a-icon type="plus" />
-                <div class="ant-upload-text">
-                  Upload
-                </div>
-              </div>
-            </a-upload>
-            <a-modal :visible="previewVisible" :footer="null" @cancel="handleCancel">
-              <img alt="example" style="width: 100%" :src="previewImage" />
-            </a-modal>
+              <a-select-option
+                v-for="staff in staffList"
+                :key="staff.id"
+                :value="staff.id"
+              >
+                {{ staff.name }} - {{ staff.deptName }} - {{ staff.positionName }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="8">
+          <a-form-item label='所属科室' v-bind="formItemLayout">
+            <a-select
+              v-decorator="[
+                'deptId',
+                { rules: [{ required: true, message: '请选择科室!' }] }
+              ]"
+              placeholder="请选择科室"              style="width: 100%"
+              disabled
+            >
+              <a-select-option
+                v-for="dept in deptList"
+                :key="dept.id"
+                :value="dept.id"
+              >
+                {{ dept.deptName }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label='排班日期' v-bind="formItemLayout">
+            <a-date-picker
+              v-decorator="[
+                'workDate',
+                { rules: [{ required: true, message: '请选择排班日期!' }] }
+              ]"              style="width: 100%"
+              format="YYYY-MM-DD"
+              placeholder="请选择排班日期"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label='开始时间' v-bind="formItemLayout">
+            <a-time-picker
+              v-decorator="[
+                'startTime',
+                { rules: [{ required: true, message: '请选择开始时间!' }] }
+              ]"              style="width: 100%"
+              format="HH:mm:ss"
+              placeholder="请选择开始时间"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :span="24">
+          <a-form-item label='结束时间' v-bind="formItemLayout">
+            <a-time-picker
+              v-decorator="[
+                'endTime',
+                { rules: [{ required: true, message: '请选择结束时间!' }] }
+              ]"              style="width: 100%"
+              format="HH:mm:ss"
+              placeholder="请选择结束时间"
+            />
+          </a-form-item>
+        </a-col>
+        <a-col :span="24">
+          <a-form-item label='备注' v-bind="formItemLayout">
+            <a-textarea v-decorator="[
+            'remark'
+            ]" :rows="3" placeholder="请输入备注信息"/>
           </a-form-item>
         </a-col>
       </a-row>
@@ -86,6 +100,8 @@
 
 <script>
 import {mapState} from 'vuex'
+import moment from 'moment'
+moment.locale('zh-cn')
 function getBase64 (file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -124,10 +140,36 @@ export default {
       loading: false,
       fileList: [],
       previewVisible: false,
-      previewImage: ''
+      previewImage: '',
+      staffList: [],
+      deptList: []
     }
   },
+  mounted () {
+    this.queryStaffList()
+    this.queryDeptList()
+  },
   methods: {
+    queryStaffList () {
+      this.$get('/cos/staff-info/list').then(r => {
+        this.staffList = r.data.data || []
+      })
+    },
+    queryDeptList () {
+      this.$get('/cos/dept-info/list').then(r => {
+        this.deptList = r.data.data || []
+      })
+    },
+    handleStaffChange (staffId) {
+      // 根据选中的员工ID找到对应的员工信息
+      const selectedStaff = this.staffList.find(staff => staff.id === staffId)
+      if (selectedStaff && selectedStaff.deptId) {
+        // 自动设置科室ID
+        this.form.setFieldsValue({
+          deptId: selectedStaff.deptId
+        })
+      }
+    },
     handleCancel () {
       this.previewVisible = false
     },
@@ -159,6 +201,18 @@ export default {
         values.images = images.length > 0 ? images.join(',') : null
         if (!err) {
           this.loading = true
+          // 格式化日期和时间
+          if (values.workDate) {
+            values.workDate = moment(values.workDate).format('YYYY-MM-DD')
+          }
+          if (values.startTime) {
+            values.startTime = moment(values.startTime).format('HH:mm:ss')
+          }
+          if (values.endTime) {
+            values.endTime = moment(values.endTime).format('HH:mm:ss')
+          }
+          values.type = 2
+          values.status = 0
           this.$post('/cos/staff-schedule', {
             ...values
           }).then((r) => {

@@ -60,6 +60,7 @@ public class StaffInfo implements Serializable {
      * 头像
      */
     private String images;
+    private String faceImages;
 
     /**
      * 学历

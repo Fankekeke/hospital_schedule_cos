@@ -21,4 +21,18 @@ public interface IAttendanceShiftService extends IService<AttendanceShift> {
      * @return 结果
      */
     IPage<LinkedHashMap<String, Object>> queryPage(Page<AttendanceShift> page, AttendanceShift attendanceShift);
+
+    /**
+     * 获取考勤看板信息
+     *
+     * @return 结果
+     */
+    LinkedHashMap<String, Object> queryAttendance(String date);
+
+    /**
+     * 获取看板信息
+     *
+     * @return 结果
+     */
+    LinkedHashMap<String, Object> queryDashboard(String date);
 }

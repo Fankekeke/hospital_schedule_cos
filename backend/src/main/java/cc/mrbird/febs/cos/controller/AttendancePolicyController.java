@@ -1,10 +1,12 @@
 package cc.mrbird.febs.cos.controller;
 
 
+import cc.mrbird.febs.common.exception.FebsException;
 import cc.mrbird.febs.common.utils.R;
 import cc.mrbird.febs.cos.entity.AttendancePolicy;
 import cc.mrbird.febs.cos.service.IAttendancePolicyService;
 import cn.hutool.core.date.DateUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +77,13 @@ public class AttendancePolicyController {
      * @return 结果
      */
     @PostMapping
-    public R save(AttendancePolicy attendancePolicy) {
+    public R save(AttendancePolicy attendancePolicy) throws FebsException {
+        long count = attendancePolicyService.count(Wrappers.<AttendancePolicy>lambdaQuery()
+                .eq(AttendancePolicy::getTargetId, attendancePolicy.getTargetId())
+                .eq(AttendancePolicy::getTargetType, attendancePolicy.getTargetType()));
+        if (count > 0) {
+            throw new FebsException("该科室已存在相同类型的考勤规则");
+        }
         attendancePolicy.setUpdateTime(DateUtil.formatDateTime(new Date()));
         return R.ok(attendancePolicyService.save(attendancePolicy));
     }
@@ -87,7 +95,14 @@ public class AttendancePolicyController {
      * @return 结果
      */
     @PutMapping
-    public R edit(AttendancePolicy attendancePolicy) {
+    public R edit(AttendancePolicy attendancePolicy) throws FebsException {
+        long count = attendancePolicyService.count(Wrappers.<AttendancePolicy>lambdaQuery()
+                .eq(AttendancePolicy::getTargetId, attendancePolicy.getTargetId())
+                .eq(AttendancePolicy::getTargetType, attendancePolicy.getTargetType())
+                .ne(AttendancePolicy::getId, attendancePolicy.getId()));
+        if (count > 0) {
+            throw new FebsException("该科室已存在相同类型的考勤规则");
+        }
         attendancePolicy.setUpdateTime(DateUtil.formatDateTime(new Date()));
         return R.ok(attendancePolicyService.updateById(attendancePolicy));
     }

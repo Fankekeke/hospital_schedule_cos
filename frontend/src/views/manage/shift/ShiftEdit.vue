@@ -31,6 +31,57 @@
             </a-select>
           </a-form-item>
         </a-col>
+        <a-col :span="24">
+          <a-form-item label='班次科室' v-bind="formItemLayout">
+            <a-select
+              v-decorator="[
+                'deptId',
+                { rules: [{ required: true, message: '请选择作用科室!' }] }
+              ]"
+              placeholder="请选择作用科室"              style="width: 100%"
+            >
+              <a-select-option
+                v-for="dept in deptList"
+                :key="dept.id"
+                :value="dept.id"
+              >
+                {{ dept.deptName }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="24">
+          <a-form-item label='作业周' v-bind="formItemLayout">
+            <a-checkbox-group v-decorator="['weekDay', {rules: [{ required: true, message: '请选择班次类型!' }]}]" style="width: 100%;">
+              <a-row>
+                <a-col :span="3">
+                  <a-checkbox :value="1">周一</a-checkbox>
+                </a-col>
+                <a-col :span="3">
+                  <a-checkbox :value="2">周二</a-checkbox>
+                </a-col>
+                <a-col :span="3">
+                  <a-checkbox :value="3">周三</a-checkbox>
+                </a-col>
+                <a-col :span="3">
+                  <a-checkbox :value="4">周四</a-checkbox>
+                </a-col>
+                <a-col :span="3">
+                  <a-checkbox :value="5">周五</a-checkbox>
+                </a-col>
+                <a-col :span="3">
+                  <a-checkbox :value="6">周六</a-checkbox>
+                </a-col>
+                <a-col :span="3">
+                  <a-checkbox :value="7">周日</a-checkbox>
+                </a-col>
+              </a-row>
+            </a-checkbox-group>
+            <div style="margin-top: 8px; color: #999; font-size: 12px;">
+              提示：选择勾选后则当天进行作业
+            </div>
+          </a-form-item>
+        </a-col>
         <a-col :span="12">
           <a-form-item label='上班时间' v-bind="formItemLayout">
             <a-time-picker v-decorator="[
@@ -109,11 +160,20 @@ export default {
       form: this.$form.createForm(this),
       loading: false,
       fileList: [],
+      deptList: [],
       previewVisible: false,
       previewImage: ''
     }
   },
+  mounted() {
+    this.queryDeptList()
+  },
   methods: {
+    queryDeptList () {
+      this.$get('/cos/dept-info/list').then(r => {
+        this.deptList = r.data.data
+      })
+    },
     handleCancel () {
       this.previewVisible = false
     },
@@ -138,7 +198,7 @@ export default {
     },
     setFormValues ({...shift}) {
       this.rowId = shift.id
-      let fields = ['shiftName', 'shiftType', 'startTime', 'endTime', 'allowLate', 'isCrossDay', 'nightAllowance']
+      let fields = ['shiftName', 'shiftType', 'startTime', 'endTime', 'allowLate', 'isCrossDay', 'nightAllowance', 'deptId']
       let obj = {}
       Object.keys(shift).forEach((key) => {
         if (fields.indexOf(key) !== -1) {
@@ -149,7 +209,14 @@ export default {
           if ((key === 'startTime' || key === 'endTime') && value) {
             value = moment(value, 'HH:mm:ss')
           }
-
+          // 处理 weekDay 字段，将逗号分隔的字符串转换为数组
+          if (key === 'weekDay' && value) {
+            if (typeof value === 'string') {
+              value = value.split(',').map(item => parseInt(item)).filter(item => !isNaN(item))
+            } else if (!Array.isArray(value)) {
+              value = []
+            }
+          }
           obj[key] = value
         }
       })
@@ -168,13 +235,21 @@ export default {
         values.id = this.rowId
         if (!err) {
           this.loading = true
+          // 处理 weekDay 字段，将数组转换为逗号分隔的字符串
+          let weekDayStr = null
+          if (values.weekDay && values.weekDay.length > 0) {
+            weekDayStr = values.weekDay.join(',')
+          }
           // 格式化时间字段
           const submitData = {
             id: this.rowId,
             ...values,
+            weekDay: weekDayStr,
             startTime: values.startTime ? moment(values.startTime).format('HH:mm:ss') : null,
             endTime: values.endTime ? moment(values.endTime).format('HH:mm:ss') : null
           }
+          // 删除原始的 weekDay 数组
+          delete submitData.weekDay
           this.$put('/cos/attendance-shift', submitData).then((r) => {
             this.reset()
             this.$emit('success')

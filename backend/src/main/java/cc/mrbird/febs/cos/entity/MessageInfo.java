@@ -1,6 +1,6 @@
 package cc.mrbird.febs.cos.entity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.io.Serializable;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -11,21 +11,18 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 /**
- * 员工排班计划表
+ * 消息通知
  *
  * @author FanK
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-public class StaffSchedule implements Serializable {
+public class MessageInfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 主键ID
-     */
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "ID", type = IdType.AUTO)
     private Integer id;
 
     /**
@@ -34,38 +31,28 @@ public class StaffSchedule implements Serializable {
     private Integer staffId;
 
     /**
-     * 所属科室ID
+     * 消息内容
      */
-    private Integer deptId;
+    private String content;
 
     /**
-     * 排班日期
+     * 发送时间
      */
-    private String workDate;
+    private String createDate;
 
     /**
-     * 关联班次ID
+     * 状态（0.未读 1.已读）
      */
-    private Integer shiftId;
+    private String readStatus;
 
     /**
-     * 执勤院区ID
+     * 已读时间
      */
-    private Integer campusId;
+    private String checkDate;
 
     /**
-     * 排班状态: 0-正常, 1-调班中, 2-已请假
+     * 员工名称
      */
-    private Integer status;
-
-    /**
-     * 类型（1.正常 2.临派）
-     */
-    private String type;
-    private String startTime;
-    private String endTime;
-    private String remark;
-
     @TableField(exist = false)
     private String staffName;
 

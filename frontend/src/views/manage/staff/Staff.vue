@@ -139,7 +139,7 @@ export default {
           }
         }
       }, {
-        title: '照片',
+        title: '头像',
         dataIndex: 'images',
         customRender: (text, record, index) => {
           if (!record.images) return <a-avatar shape="square" icon="user" />

@@ -21,4 +21,10 @@ public interface IAttendanceSummaryService extends IService<AttendanceSummary> {
      * @return 结果
      */
     IPage<LinkedHashMap<String, Object>> queryPage(Page<AttendanceSummary> page, AttendanceSummary attendanceSummary);
+
+    /**
+     * 生成考勤汇总信息
+     */
+    boolean generateAttendanceSummary();
+    boolean generateAttendanceSummaryFix();
 }

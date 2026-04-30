@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.io.Serializable;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -44,7 +45,7 @@ public class AttendanceSummary implements Serializable {
     private String workDate;
 
     /**
-     * 状态: 1-正常, 2-迟到, 3-早退, 4-缺卡, 5-旷工
+     * 状态: 1-正常, 2-迟到, 3-早退, 4-缺卡, 5-旷工 6-加班
      */
     private Integer resultStatus;
 
@@ -78,5 +79,20 @@ public class AttendanceSummary implements Serializable {
      */
     private String auditRemark;
 
+    /**
+     * 规定上班时间
+     */
+    private String startTime;
+
+    /**
+     * 规定下班时间
+     */
+    private String endTime;
+
+    @TableField(exist = false)
+    private String staffName;
+
+    @TableField(exist = false)
+    private String deptName;
 
 }

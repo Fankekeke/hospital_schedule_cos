@@ -1,5 +1,5 @@
 <template>
-  <a-modal v-model="show" title="修改打卡规则" @cancel="onClose" :width="550">
+  <a-modal v-model="show" title="修改打卡记录" @cancel="onClose" :width="800">
     <template slot="footer">
       <a-button key="back" @click="onClose">
         取消
@@ -10,53 +10,73 @@
     </template>
     <a-form :form="form" layout="vertical">
       <a-row :gutter="20">
-        <a-col :span="24">
-          <a-form-item label='策略名称' v-bind="formItemLayout">
+        <a-col :span="12">
+          <a-form-item label='打卡记录标题' v-bind="formItemLayout">
             <a-input v-decorator="[
-            'policyName',
-            { rules: [{ required: true, message: '请输入策略名称!' }] }
+            'title',
+            { rules: [{ required: true, message: '请输入名称!' }] }
             ]"/>
           </a-form-item>
         </a-col>
-        <a-col :span="24">
-          <a-form-item label='作用科室' v-bind="formItemLayout">
-            <a-select
-              v-decorator="[
-                'targetId',
-                { rules: [{ required: true, message: '请选择作用科室!' }] }
-              ]"
-              placeholder="请选择作用科室"              style="width: 100%"
-            >
-              <a-select-option
-                v-for="dept in deptList"
-                :key="dept.id"
-                :value="dept.id"
-              >
-                {{ dept.deptName }}
-              </a-select-option>
+        <a-col :span="12">
+          <a-form-item label='上传人' v-bind="formItemLayout">
+            <a-input v-decorator="[
+            'publisher',
+            { rules: [{ required: true, message: '请输入上传人!' }] }
+            ]"/>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label='打卡记录类型' v-bind="formItemLayout">
+            <a-select v-decorator="[
+              'type',
+              { rules: [{ required: true, message: '请输入打卡记录类型!' }] }
+              ]">
+              <a-select-option value="1">系统打卡记录</a-select-option>
+              <a-select-option value="2">活动通知</a-select-option>
+              <a-select-option value="3">紧急消息</a-select-option>
+            </a-select>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label='打卡记录状态' v-bind="formItemLayout">
+            <a-select v-decorator="[
+              'rackUp',
+              { rules: [{ required: true, message: '请输入打卡记录状态!' }] }
+              ]">
+              <a-select-option value="0">下架</a-select-option>
+              <a-select-option value="1">已发布</a-select-option>
             </a-select>
           </a-form-item>
         </a-col>
         <a-col :span="24">
-          <div class="section-title">
-            <a-icon type="setting" theme="filled" />
-            <span> 打卡规则配置</span>
-          </div>
+          <a-form-item label='打卡记录内容' v-bind="formItemLayout">
+            <a-textarea :rows="6" v-decorator="[
+            'content',
+             { rules: [{ required: true, message: '请输入名称!' }] }
+            ]"/>
+          </a-form-item>
         </a-col>
         <a-col :span="24">
-          <a-form-item label='' v-bind="formItemLayout">
-            <a-row :gutter="16">
-              <a-col :span="24">
-                <a-form-item label='GPS允许打卡范围(米)'>
-                  <a-input-number
-                    v-decorator="['gpsRange']"
-                    :min="0"
-                    :max="10000"                    style="width: 100%"
-                    placeholder="如: 500"
-                  />
-                </a-form-item>
-              </a-col>
-            </a-row>
+          <a-form-item label='图册' v-bind="formItemLayout">
+            <a-upload
+              name="avatar"
+              action="http://127.0.0.1:9527/file/fileUpload/"
+              list-type="picture-card"
+              :file-list="fileList"
+              @preview="handlePreview"
+              @change="picHandleChange"
+            >
+              <div v-if="fileList.length < 8">
+                <a-icon type="plus" />
+                <div class="ant-upload-text">
+                  Upload
+                </div>
+              </div>
+            </a-upload>
+            <a-modal :visible="previewVisible" :footer="null" @cancel="handleCancel">
+              <img alt="example" style="width: 100%" :src="previewImage" />
+            </a-modal>
           </a-form-item>
         </a-col>
       </a-row>
@@ -103,21 +123,12 @@ export default {
       formItemLayout,
       form: this.$form.createForm(this),
       loading: false,
-      deptList: [],
       fileList: [],
       previewVisible: false,
       previewImage: ''
     }
   },
-  mounted () {
-    this.queryDeptList()
-  },
   methods: {
-    queryDeptList () {
-      this.$get('/cos/dept-info/list').then(r => {
-        this.deptList = r.data.data
-      })
-    },
     handleCancel () {
       this.previewVisible = false
     },
@@ -142,7 +153,7 @@ export default {
     },
     setFormValues ({...bulletin}) {
       this.rowId = bulletin.id
-      let fields = ['policyName', 'targetId', 'gpsRange']
+      let fields = ['title', 'content', 'publisher', 'rackUp', 'type']
       let obj = {}
       Object.keys(bulletin).forEach((key) => {
         if (key === 'images') {
@@ -180,10 +191,9 @@ export default {
       this.form.validateFields((err, values) => {
         values.id = this.rowId
         values.images = images.length > 0 ? images.join(',') : null
-        values.targetType = 1
         if (!err) {
           this.loading = true
-          this.$put('/cos/attendance-policy', {
+          this.$put('/cos/attendance-raw-record', {
             ...values
           }).then((r) => {
             this.reset()
@@ -198,34 +208,6 @@ export default {
 }
 </script>
 
-<style scoped>.section-title {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  margin-bottom: 16px;
-  background: #f5f7fa;
-  border-left: 4px solid #1890ff;
-  border-radius: 1px;
-}
+<style scoped>
 
-.title-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 50%;
-  margin-right: 10px;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.4);
-}
-
-.title-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: #262626;
-}
 </style>

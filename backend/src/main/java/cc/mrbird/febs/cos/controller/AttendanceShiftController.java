@@ -8,6 +8,7 @@ import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -34,6 +35,27 @@ public class AttendanceShiftController {
     public R page(Page<AttendanceShift> page, AttendanceShift attendanceShift) {
         return R.ok(attendanceShiftService.queryPage(page, attendanceShift));
     }
+
+    /**
+     * 获取考勤看板信息
+     *
+     * @return 结果
+     */
+    @GetMapping("/queryAttendance")
+    public R queryAttendance(String date) {
+        return R.ok(attendanceShiftService.queryAttendance(date));
+    }
+
+    /**
+     * 获取看板信息
+     *
+     * @return 结果
+     */
+    @GetMapping("/queryDashboard")
+    public R queryDashboard(String date) {
+        return R.ok(attendanceShiftService.queryDashboard(date));
+    }
+
 
     /**
      * 获取ID获取班次定义详情

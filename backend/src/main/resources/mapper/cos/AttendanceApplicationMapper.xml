@@ -12,6 +12,7 @@
         aa.audit_status,
         aa.auditor_id,
         aa.create_time,
+        aa.approval_content,
 
         si.name as staffName,
         si.images as staffImages,
@@ -29,6 +30,9 @@
         </if>
         <if test="queryForm.applyType != null and queryForm.applyType != ''">
             AND aa.apply_type = #{queryForm.applyType}
+        </if>
+        <if test="queryForm.auditStatus != null and queryForm.auditStatus != ''">
+            AND aa.audit_status = #{queryForm.auditStatus}
         </if>
         order by aa.create_time desc
     </select>

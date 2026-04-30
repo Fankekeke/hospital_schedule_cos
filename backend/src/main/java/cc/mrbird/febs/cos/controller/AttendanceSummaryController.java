@@ -36,6 +36,26 @@ public class AttendanceSummaryController {
     }
 
     /**
+     * 生成考勤汇总信息
+     *
+     * @return 考勤汇总信息
+     */
+    @GetMapping("/generateAttendanceSummary")
+    public R generateAttendanceSummary() {
+        return R.ok(attendanceSummaryService.generateAttendanceSummary());
+    }
+
+    /**
+     * 生成考勤汇总信息
+     *
+     * @return 考勤汇总信息
+     */
+    @GetMapping("/generateAttendanceSummaryFix")
+    public R generateAttendanceSummaryFix() {
+        return R.ok(attendanceSummaryService.generateAttendanceSummaryFix());
+    }
+
+    /**
      * 获取ID获取考勤汇总详情
      *
      * @param id 主键
