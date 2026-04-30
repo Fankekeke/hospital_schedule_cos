@@ -102,6 +102,23 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
         Map<Integer, List<AttendanceSummary>> staffSummaryMap = summaryList.stream()
                 .collect(Collectors.groupingBy(AttendanceSummary::getStaffId));
 
+        List<AttendanceShift> shiftList = this.list();
+        Map<Integer, AttendanceShift> staffShiftMap = new HashMap<>();
+        for (AttendanceShift shift : shiftList) {
+            if (shift.getStaffIds() != null && !shift.getStaffIds().isEmpty()) {
+                String[] staffIdArray = shift.getStaffIds().split(",");
+                for (String id : staffIdArray) {
+                    try {
+                        Integer staffId = Integer.parseInt(id.trim());
+                        if (!staffShiftMap.containsKey(staffId)) {
+                            staffShiftMap.put(staffId, shift);
+                        }
+                    } catch (NumberFormatException e) {
+                    }
+                }
+            }
+        }
+
         LinkedHashMap<String, Object> result = new LinkedHashMap<>();
         result.put("staffList", staffInfoList);
 
@@ -115,6 +132,8 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
             staffAttendance.put("staffId", staffId);
             staffAttendance.put("staffName", staffName);
 
+            AttendanceShift shift = staffShiftMap.get(staffId);
+
             List<AttendanceSummary> summaries = staffSummaryMap.getOrDefault(staffId, new ArrayList<>());
             Map<String, AttendanceSummary> summaryByDate = summaries.stream()
                     .collect(Collectors.toMap(AttendanceSummary::getWorkDate, s -> s, (s1, s2) -> s1));
@@ -123,6 +142,26 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
 
             for (int day = 1; day <= daysInMonth; day++) {
                 String currentDate = DateUtil.formatDate(DateUtil.offsetDay(DateUtil.parse(firstDayOfMonth), day - 1));
+
+                int currentDayOfWeek = DateUtil.dayOfWeek(DateUtil.parse(currentDate));
+                String currentWeekDay = String.valueOf(currentDayOfWeek - 1);
+
+                boolean shouldShowRecord = false;
+                if (shift != null && shift.getWeekDay() != null && !shift.getWeekDay().isEmpty()) {
+                    String[] weekDays = shift.getWeekDay().split(",");
+                    for (String wd : weekDays) {
+                        if (wd.trim().equals(currentWeekDay)) {
+                            shouldShowRecord = true;
+                            break;
+                        }
+                    }
+                } else {
+                    shouldShowRecord = true;
+                }
+
+                if (!shouldShowRecord) {
+                    continue;
+                }
 
                 LinkedHashMap<String, Object> dailyRecord = new LinkedHashMap<>();
                 dailyRecord.put("date", currentDate);
@@ -227,6 +266,26 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
 
             for (int day = 1; day <= daysInMonth; day++) {
                 String currentDate = DateUtil.formatDate(DateUtil.offsetDay(DateUtil.parse(firstDayOfMonth), day - 1));
+
+                int currentDayOfWeek = DateUtil.dayOfWeek(DateUtil.parse(currentDate));
+                String currentWeekDay = String.valueOf(currentDayOfWeek - 1);
+
+                boolean shouldShowSchedule = false;
+                if (shift != null && shift.getWeekDay() != null && !shift.getWeekDay().isEmpty()) {
+                    String[] weekDays = shift.getWeekDay().split(",");
+                    for (String wd : weekDays) {
+                        if (wd.trim().equals(currentWeekDay)) {
+                            shouldShowSchedule = true;
+                            break;
+                        }
+                    }
+                } else if (shift != null) {
+                    shouldShowSchedule = true;
+                }
+
+                if (!shouldShowSchedule) {
+                    continue;
+                }
 
                 LinkedHashMap<String, Object> dailySchedule = new LinkedHashMap<>();
                 dailySchedule.put("date", currentDate);

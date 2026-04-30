@@ -53,6 +53,10 @@ public class AttendanceSummaryServiceImpl extends ServiceImpl<AttendanceSummaryM
     public boolean generateAttendanceSummary() {
         String yesterday = DateUtil.formatDate(DateUtil.yesterday());
 
+        int dayOfWeek = DateUtil.dayOfWeek(DateUtil.parse(yesterday));
+
+        String yesterdayWeekDay = String.valueOf(dayOfWeek - 1);
+
         List<StaffInfo> staffInfoList = staffInfoService.list();
         if (staffInfoList == null || staffInfoList.isEmpty()) {
             return false;
@@ -77,6 +81,21 @@ public class AttendanceSummaryServiceImpl extends ServiceImpl<AttendanceSummaryM
             if (StrUtil.isBlank(shift.getStaffIds())) {
                 continue;
             }
+
+            if (StrUtil.isNotBlank(shift.getWeekDay())) {
+                String[] weekDays = shift.getWeekDay().split(",");
+                boolean isWorkDay = false;
+                for (String wd : weekDays) {
+                    if (wd.trim().equals(yesterdayWeekDay)) {
+                        isWorkDay = true;
+                        break;
+                    }
+                }
+                if (!isWorkDay) {
+                    continue;
+                }
+            }
+
             String[] staffIdArray = shift.getStaffIds().split(",");
             for (String id : staffIdArray) {
                 try {
@@ -254,6 +273,7 @@ public class AttendanceSummaryServiceImpl extends ServiceImpl<AttendanceSummaryM
             if (StrUtil.isBlank(shift.getStaffIds())) {
                 continue;
             }
+
             String[] staffIdArray = shift.getStaffIds().split(",");
             for (String id : staffIdArray) {
                 try {
@@ -278,6 +298,24 @@ public class AttendanceSummaryServiceImpl extends ServiceImpl<AttendanceSummaryM
 
             for (int day = 1; day <= daysInMonth; day++) {
                 String currentDate = DateUtil.formatDate(DateUtil.offsetDay(DateUtil.parse(firstDayOfMonth), day - 1));
+
+                int currentDayOfWeek = DateUtil.dayOfWeek(DateUtil.parse(currentDate));
+                String currentWeekDay = String.valueOf(currentDayOfWeek - 1);
+
+                if (StrUtil.isNotBlank(shift.getWeekDay())) {
+                    String[] weekDays = shift.getWeekDay().split(",");
+                    boolean isWorkDay = false;
+                    for (String wd : weekDays) {
+                        if (wd.trim().equals(currentWeekDay)) {
+                            isWorkDay = true;
+                            break;
+                        }
+                    }
+                    if (!isWorkDay) {
+                        continue;
+                    }
+                }
+
                 List<AttendanceRawRecord> records = staffRecordMap.entrySet().stream()
                         .filter(entry -> entry.getKey().equals(staff.getId()))
                         .flatMap(entry -> entry.getValue().stream())
