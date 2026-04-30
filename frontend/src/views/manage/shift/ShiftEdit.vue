@@ -198,7 +198,7 @@ export default {
     },
     setFormValues ({...shift}) {
       this.rowId = shift.id
-      let fields = ['shiftName', 'shiftType', 'startTime', 'endTime', 'allowLate', 'isCrossDay', 'nightAllowance', 'deptId']
+      let fields = ['shiftName', 'shiftType', 'startTime', 'endTime', 'allowLate', 'isCrossDay', 'nightAllowance', 'deptId', 'weekDay']
       let obj = {}
       Object.keys(shift).forEach((key) => {
         if (fields.indexOf(key) !== -1) {
@@ -248,8 +248,6 @@ export default {
             startTime: values.startTime ? moment(values.startTime).format('HH:mm:ss') : null,
             endTime: values.endTime ? moment(values.endTime).format('HH:mm:ss') : null
           }
-          // 删除原始的 weekDay 数组
-          delete submitData.weekDay
           this.$put('/cos/attendance-shift', submitData).then((r) => {
             this.reset()
             this.$emit('success')

@@ -210,8 +210,6 @@ export default {
             startTime: values.startTime ? moment(values.startTime).format('HH:mm') : null,
             endTime: values.endTime ? moment(values.endTime).format('HH:mm') : null
           }
-          // 删除原始的 weekDay 数组
-          delete submitData.weekDay
           this.$post('/cos/attendance-shift', submitData).then((r) => {
             this.reset()
             this.$emit('success')

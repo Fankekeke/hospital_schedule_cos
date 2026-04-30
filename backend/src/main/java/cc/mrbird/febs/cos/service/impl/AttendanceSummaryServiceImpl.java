@@ -447,4 +447,122 @@ public class AttendanceSummaryServiceImpl extends ServiceImpl<AttendanceSummaryM
         }
         return false;
     }
+
+
+    /**
+     * 异常频次分析
+     *
+     * @param date      月份，格式：yyyy-MM
+     * @param dimension 统计维度：dept-部门，staff-个人
+     * @return 异常频次分析结果
+     */
+    @Override
+    public List<LinkedHashMap<String, Object>> anomalyFrequencyAnalysis(String date, String dimension) {
+        if (date == null || date.isEmpty()) {
+            date = DateUtil.format(new Date(), "yyyy-MM");
+        }
+
+        String firstDayOfMonth = date + "-01";
+        String lastDayOfMonth = DateUtil.formatDate(DateUtil.endOfMonth(DateUtil.parse(firstDayOfMonth)));
+
+        List<AttendanceSummary> summaryList = this.list(Wrappers.<AttendanceSummary>lambdaQuery()
+                .ge(AttendanceSummary::getWorkDate, firstDayOfMonth)
+                .le(AttendanceSummary::getWorkDate, lastDayOfMonth));
+
+        List<StaffInfo> staffInfoList = staffInfoService.list();
+        Map<Integer, StaffInfo> staffMap = staffInfoList.stream()
+                .collect(Collectors.toMap(StaffInfo::getId, s -> s));
+
+        if ("dept".equals(dimension)) {
+            Map<Integer, List<AttendanceSummary>> deptSummaryMap = new HashMap<>();
+
+            for (AttendanceSummary summary : summaryList) {
+                StaffInfo staff = staffMap.get(summary.getStaffId());
+                if (staff != null && staff.getDeptId() != null) {
+                    deptSummaryMap.computeIfAbsent(staff.getDeptId(), k -> new ArrayList<>()).add(summary);
+                }
+            }
+
+            List<LinkedHashMap<String, Object>> result = new ArrayList<>();
+            for (Map.Entry<Integer, List<AttendanceSummary>> entry : deptSummaryMap.entrySet()) {
+                Integer deptId = entry.getKey();
+                List<AttendanceSummary> deptSummaries = entry.getValue();
+
+                LinkedHashMap<String, Object> deptData = new LinkedHashMap<>();
+                deptData.put("deptId", deptId);
+
+                StaffInfo firstStaff = deptSummaries.stream()
+                        .map(s -> staffMap.get(s.getStaffId()))
+                        .filter(s -> s != null)
+                        .findFirst()
+                        .orElse(null);
+                deptData.put("deptName", firstStaff != null ? firstStaff.getDeptName() : "未知部门");
+
+                long lateCount = deptSummaries.stream().filter(s -> s.getLateMinutes() != null && s.getLateMinutes() > 0).count();
+                int totalLateMinutes = deptSummaries.stream()
+                        .filter(s -> s.getLateMinutes() != null)
+                        .mapToInt(AttendanceSummary::getLateMinutes)
+                        .sum();
+
+                long earlyCount = deptSummaries.stream().filter(s -> s.getEarlyMinutes() != null && s.getEarlyMinutes() > 0).count();
+                int totalEarlyMinutes = deptSummaries.stream()
+                        .filter(s -> s.getEarlyMinutes() != null)
+                        .mapToInt(AttendanceSummary::getEarlyMinutes)
+                        .sum();
+
+                deptData.put("lateCount", lateCount);
+                deptData.put("totalLateMinutes", totalLateMinutes);
+                deptData.put("earlyCount", earlyCount);
+                deptData.put("totalEarlyMinutes", totalEarlyMinutes);
+                deptData.put("totalRecords", deptSummaries.size());
+
+                result.add(deptData);
+            }
+
+            return result;
+        } else {
+            Map<Integer, List<AttendanceSummary>> staffSummaryMap = summaryList.stream()
+                    .collect(Collectors.groupingBy(AttendanceSummary::getStaffId));
+
+            List<LinkedHashMap<String, Object>> result = new ArrayList<>();
+            for (Map.Entry<Integer, List<AttendanceSummary>> entry : staffSummaryMap.entrySet()) {
+                Integer staffId = entry.getKey();
+                List<AttendanceSummary> staffSummaries = entry.getValue();
+
+                StaffInfo staff = staffMap.get(staffId);
+                if (staff == null) {
+                    continue;
+                }
+
+                LinkedHashMap<String, Object> staffData = new LinkedHashMap<>();
+                staffData.put("staffId", staffId);
+                staffData.put("staffName", staff.getName());
+                staffData.put("code", staff.getCode());
+                staffData.put("deptId", staff.getDeptId());
+                staffData.put("deptName", staff.getDeptName());
+
+                long lateCount = staffSummaries.stream().filter(s -> s.getLateMinutes() != null && s.getLateMinutes() > 0).count();
+                int totalLateMinutes = staffSummaries.stream()
+                        .filter(s -> s.getLateMinutes() != null)
+                        .mapToInt(AttendanceSummary::getLateMinutes)
+                        .sum();
+
+                long earlyCount = staffSummaries.stream().filter(s -> s.getEarlyMinutes() != null && s.getEarlyMinutes() > 0).count();
+                int totalEarlyMinutes = staffSummaries.stream()
+                        .filter(s -> s.getEarlyMinutes() != null)
+                        .mapToInt(AttendanceSummary::getEarlyMinutes)
+                        .sum();
+
+                staffData.put("lateCount", lateCount);
+                staffData.put("totalLateMinutes", totalLateMinutes);
+                staffData.put("earlyCount", earlyCount);
+                staffData.put("totalEarlyMinutes", totalEarlyMinutes);
+                staffData.put("totalRecords", staffSummaries.size());
+
+                result.add(staffData);
+            }
+
+            return result;
+        }
+    }
 }

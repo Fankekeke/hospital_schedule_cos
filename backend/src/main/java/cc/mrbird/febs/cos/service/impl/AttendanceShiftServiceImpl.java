@@ -2,15 +2,18 @@ package cc.mrbird.febs.cos.service.impl;
 
 import cc.mrbird.febs.cos.dao.AttendanceSummaryMapper;
 import cc.mrbird.febs.cos.dao.StaffInfoMapper;
+import cc.mrbird.febs.cos.dao.StaffScheduleMapper;
 import cc.mrbird.febs.cos.entity.AttendanceShift;
 import cc.mrbird.febs.cos.dao.AttendanceShiftMapper;
 import cc.mrbird.febs.cos.entity.AttendanceSummary;
 import cc.mrbird.febs.cos.entity.StaffInfo;
+import cc.mrbird.febs.cos.entity.StaffSchedule;
 import cc.mrbird.febs.cos.service.IAttendanceShiftService;
 import cc.mrbird.febs.cos.service.IAttendanceSummaryService;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +36,8 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
 
     @Lazy
     private final AttendanceSummaryMapper attendanceSummaryService;
+
+    private final StaffScheduleMapper staffScheduleMapper;
 
 
     /**
@@ -93,6 +98,10 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
 
         int daysInMonth = DateUtil.lengthOfMonth(DateUtil.month(DateUtil.parse(firstDayOfMonth)) + 1,
                 DateUtil.isLeapYear(DateUtil.year(DateUtil.parse(firstDayOfMonth))));
+
+        List<StaffSchedule> staffScheduleList = staffScheduleMapper.selectList(Wrappers.<StaffSchedule>lambdaQuery());
+        Map<Integer, List<StaffSchedule>> staffScheduleMap = staffScheduleList.stream()
+                .collect(Collectors.groupingBy(StaffSchedule::getStaffId));
 
         List<AttendanceSummary> summaryList = attendanceSummaryService.selectList(
                 com.baomidou.mybatisplus.core.toolkit.Wrappers.<AttendanceSummary>lambdaQuery()
@@ -167,6 +176,15 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
                 dailyRecord.put("date", currentDate);
                 dailyRecord.put("day", day);
 
+                List<StaffSchedule> daySchedules = staffScheduleMap.getOrDefault(staffId, new ArrayList<>()).stream()
+                        .filter(schedule -> currentDate.equals(schedule.getWorkDate()))
+                        .collect(Collectors.toList());
+
+                StaffSchedule temporarySchedule = daySchedules.stream()
+                        .filter(schedule -> "2".equals(schedule.getType()))
+                        .findFirst()
+                        .orElse(null);
+
                 AttendanceSummary summary = summaryByDate.get(currentDate);
                 if (summary != null) {
                     dailyRecord.put("resultStatus", summary.getResultStatus());
@@ -184,6 +202,18 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
                     dailyRecord.put("isException", 0);
                     dailyRecord.put("startTime", null);
                     dailyRecord.put("endTime", null);
+                }
+
+                if (temporarySchedule != null) {
+                    dailyRecord.put("temporaryShiftName", temporarySchedule.getRemark());
+                    dailyRecord.put("temporaryStartTime", temporarySchedule.getStartTime());
+                    dailyRecord.put("temporaryEndTime", temporarySchedule.getEndTime());
+                    dailyRecord.put("temporaryType", "临派");
+                } else {
+                    dailyRecord.put("temporaryShiftName", null);
+                    dailyRecord.put("temporaryStartTime", null);
+                    dailyRecord.put("temporaryEndTime", null);
+                    dailyRecord.put("temporaryType", null);
                 }
 
                 dailyRecords.add(dailyRecord);
@@ -219,6 +249,10 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
                 DateUtil.isLeapYear(DateUtil.year(DateUtil.parse(firstDayOfMonth))));
 
         List<AttendanceShift> shiftList = this.list();
+
+        List<StaffSchedule> staffScheduleList = staffScheduleMapper.selectList(Wrappers.<StaffSchedule>lambdaQuery());
+        Map<Integer, List<StaffSchedule>> staffScheduleMap = staffScheduleList.stream()
+                .collect(Collectors.groupingBy(StaffSchedule::getStaffId));
 
         Map<Integer, AttendanceShift> staffShiftMap = new HashMap<>();
         for (AttendanceShift shift : shiftList) {
@@ -270,8 +304,19 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
                 int currentDayOfWeek = DateUtil.dayOfWeek(DateUtil.parse(currentDate));
                 String currentWeekDay = String.valueOf(currentDayOfWeek - 1);
 
+                List<StaffSchedule> daySchedules = staffScheduleMap.getOrDefault(staffId, new ArrayList<>()).stream()
+                        .filter(schedule -> currentDate.equals(schedule.getWorkDate()))
+                        .collect(Collectors.toList());
+
+                StaffSchedule temporarySchedule = daySchedules.stream()
+                        .filter(schedule -> "2".equals(schedule.getType()))
+                        .findFirst()
+                        .orElse(null);
+
                 boolean shouldShowSchedule = false;
-                if (shift != null && shift.getWeekDay() != null && !shift.getWeekDay().isEmpty()) {
+                if (temporarySchedule != null) {
+                    shouldShowSchedule = true;
+                } else if (shift != null && shift.getWeekDay() != null && !shift.getWeekDay().isEmpty()) {
                     String[] weekDays = shift.getWeekDay().split(",");
                     for (String wd : weekDays) {
                         if (wd.trim().equals(currentWeekDay)) {
@@ -291,7 +336,33 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
                 dailySchedule.put("date", currentDate);
                 dailySchedule.put("day", day);
 
-                if (shift != null) {
+                if (temporarySchedule != null) {
+                    String tempStartTime = temporarySchedule.getStartTime();
+                    String tempEndTime = temporarySchedule.getEndTime();
+
+                    String startTime = currentDate + " " + tempStartTime;
+                    String endTime = currentDate + " " + tempEndTime;
+
+                    if (tempStartTime != null && tempEndTime != null) {
+                        LocalTime scheduleStartTime = LocalTime.parse(tempStartTime);
+                        LocalTime scheduleEndTime = LocalTime.parse(tempEndTime);
+
+                        if (scheduleStartTime.isAfter(scheduleEndTime)) {
+                            String nextDay = DateUtil.formatDate(DateUtil.offsetDay(DateUtil.parse(currentDate), 1));
+                            endTime = nextDay + " " + tempEndTime;
+                            dailySchedule.put("isCrossDay", 1);
+                        } else {
+                            dailySchedule.put("isCrossDay", 0);
+                        }
+                    }
+
+                    dailySchedule.put("startTime", startTime);
+                    dailySchedule.put("endTime", endTime);
+                    dailySchedule.put("shiftName", temporarySchedule.getRemark() != null ? temporarySchedule.getRemark() : "临派班次");
+                    dailySchedule.put("scheduleType", "temporary");
+                    dailySchedule.put("shiftId", temporarySchedule.getShiftId());
+                    dailySchedule.put("campusId", temporarySchedule.getCampusId());
+                } else if (shift != null) {
                     String startTime = currentDate + " " + shift.getStartTime();
                     String endTime = currentDate + " " + shift.getEndTime();
 
@@ -301,17 +372,25 @@ public class AttendanceShiftServiceImpl extends ServiceImpl<AttendanceShiftMappe
                     if (shiftStartTime.isAfter(shiftEndTime)) {
                         String nextDay = DateUtil.formatDate(DateUtil.offsetDay(DateUtil.parse(currentDate), 1));
                         endTime = nextDay + " " + shift.getEndTime();
+                        dailySchedule.put("isCrossDay", 1);
+                    } else {
+                        dailySchedule.put("isCrossDay", 0);
                     }
 
                     dailySchedule.put("startTime", startTime);
                     dailySchedule.put("endTime", endTime);
                     dailySchedule.put("shiftName", shift.getShiftName());
-                    dailySchedule.put("isCrossDay", shiftStartTime.isAfter(shiftEndTime) ? 1 : 0);
+                    dailySchedule.put("scheduleType", "regular");
+                    dailySchedule.put("shiftId", shift.getId());
+                    dailySchedule.put("campusId", null);
                 } else {
                     dailySchedule.put("startTime", null);
                     dailySchedule.put("endTime", null);
                     dailySchedule.put("shiftName", "未排班");
                     dailySchedule.put("isCrossDay", 0);
+                    dailySchedule.put("scheduleType", null);
+                    dailySchedule.put("shiftId", null);
+                    dailySchedule.put("campusId", null);
                 }
 
                 dailySchedules.add(dailySchedule);
