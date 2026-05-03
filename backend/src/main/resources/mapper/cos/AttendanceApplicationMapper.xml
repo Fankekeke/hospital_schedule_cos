@@ -34,6 +34,9 @@
         <if test="queryForm.auditStatus != null and queryForm.auditStatus != ''">
             AND aa.audit_status = #{queryForm.auditStatus}
         </if>
+        <if test="queryForm.staffId != null and queryForm.staffId != ''">
+            AND si.user_id = #{queryForm.staffId}
+        </if>
         order by aa.create_time desc
     </select>
 </mapper>
