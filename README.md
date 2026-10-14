@@ -176,7 +176,7 @@ WeChat: `Storm_Berserker`
 
 > 项目部署调试不好包退！功能逻辑没讲明白包退！
 
-<p><img align="center" src="./assets/product_word.png" alt="fankekeke" /></p>
+<div align=center><img align="center" src="./assets/product_word.png" alt="fankekeke" /></div>
 
 #### 其它资源
 [2026年-答辩顺利通过-客户评价🀄](https://berserker287.github.io/2026/06/29/2026%E5%B9%B4%E7%AD%94%E8%BE%A9%E9%A1%BA%E5%88%A9%E9%80%9A%E8%BF%87/)
@@ -205,6 +205,6 @@ More info: [悲伤的橘子树](https://berserker287.github.io/)
 
 <p><img align="center" src="./assets/wechat_group.png" alt="fankekeke" /></p>
 
-<p style="margin: 0 auto"><img align="center" src="./assets/chat_qr_code.png" alt="fankekeke" width=250 /></p>
+<div align="center"><img align="center" src="./assets/chat_qr_code.png" alt="fankekeke" width=250 /></div>
 
 **感谢查看**
