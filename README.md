@@ -203,4 +203,4 @@ WeChat: `Storm_Berserker`
 More info: [悲伤的橘子树](https://berserker287.github.io/)
 
 <p><img align="center" src="./assets/5c53409afc8a21a6a7bed94527436dcb.png" alt="fankekeke" /></p>
-****
+** 感谢查看 **
