@@ -205,6 +205,6 @@ More info: [悲伤的橘子树](https://berserker287.github.io/)
 
 <p><img align="center" src="./assets/wechat_group.png" alt="fankekeke" /></p>
 
-<p><img align="center" src="./assets/chat_qr_code.png" alt="fankekeke" /></p>
+<p><img align="center" src="./assets/chat_qr_code.png" alt="fankekeke" width=250 /></p>
 
 **感谢查看**
